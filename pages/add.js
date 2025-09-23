@@ -1,12 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import supabase from '../lib/supabaseClient'
-//import { useState, useEffect, useRef } from 'react'
-//import { createClient } from '@supabase/supabase-js'
-
-// REEMPLAZA CON TUS CREDENCIALES DE SUPABASE
-//const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tu-proyecto.supabase.co'
-//const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'tu-clave-publica'
-//const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function WallDigital() {
   // Estados
@@ -16,11 +9,25 @@ export default function WallDigital() {
   const [isOnline, setIsOnline] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [clickPosition, setClickPosition] = useState(null)
-  const [status, setStatus] = useState('')
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastType, setToastType] = useState('')
   
   // Referencias
   const wallContainerRef = useRef(null)
   const refreshIntervalRef = useRef(null)
+
+  // ========================================
+  // FUNCIONES DE NOTIFICACIONES
+  // ========================================
+
+  const showToast = (message, type = 'info') => {
+    setToastMessage(message)
+    setToastType(type)
+    setTimeout(() => {
+      setToastMessage('')
+      setToastType('')
+    }, 4000)
+  }
 
   // ========================================
   // FUNCIONES DE BASE DE DATOS
@@ -28,57 +35,83 @@ export default function WallDigital() {
 
   const checkConnection = async () => {
     try {
+      console.log('🔄 Verificando conexión a Supabase...')
+      
       const { data, error } = await supabase
         .from('messages')
-        .select('count', { count: 'exact' })
+        .select('id')
         .limit(1)
       
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error en checkConnection:', error)
+        throw error
+      }
+      
+      console.log('✅ Conexión exitosa a Supabase')
       setIsOnline(true)
       return true
     } catch (error) {
-      console.error('Error de conexión:', error)
+      console.error('❌ Error de conexión:', error)
       setIsOnline(false)
+      showToast(`Sin conexión: ${error.message}`, 'error')
       return false
     }
   }
 
   const cargarMensajes = async () => {
-    if (!isOnline) return
+    if (!isOnline) {
+      console.log('⚠️ No hay conexión, saltando carga de mensajes')
+      return
+    }
 
     try {
-      const now = Date.now()
-      const oneMinuteAgo = now - (60 * 1000)
+      console.log('📥 Cargando mensajes...')
+      
+      const now = new Date()
+      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
       
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .gte('created_at', new Date(oneMinuteAgo).toISOString())
+        .gte('created_at', oneMinuteAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(50)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error cargando mensajes:', error)
+        throw error
+      }
 
-      const mensajesConTimer = data.map(note => ({
-        id: note.id,
-        texto: note.texto,
-        nombre: note.nombre,
-        x: note.position_x || Math.random() * 80 + 10,
-        y: note.position_y || Math.random() * 80 + 10,
-        createdAt: new Date(note.created_at).getTime(),
-        expirationTime: new Date(note.created_at).getTime() + (60 * 1000)
+      console.log(`📊 Mensajes cargados: ${data?.length || 0}`)
+
+      const mensajesConTimer = (data || []).map(msg => ({
+        id: msg.id,
+        texto: msg.text || msg.texto, // Compatibilidad con ambos nombres
+        nombre: msg.nickname || msg.nombre, // Compatibilidad con ambos nombres
+        x: msg.position_x || Math.random() * 80 + 10,
+        y: msg.position_y || Math.random() * 80 + 10,
+        createdAt: new Date(msg.created_at).getTime(),
+        expirationTime: new Date(msg.created_at).getTime() + (60 * 1000)
       }))
 
       setMensajes(mensajesConTimer)
     } catch (error) {
-      console.error('Error cargando mensajes:', error)
+      console.error('❌ Error cargando mensajes:', error)
       setIsOnline(false)
-      showToast('Error conectando a Supabase', 'error')
+      showToast('Error conectando a la base de datos', 'error')
     }
   }
 
   const agregarMensaje = async () => {
-    if (isLoading || !isOnline) return
+    if (isLoading) {
+      console.log('⚠️ Ya hay una operación en curso')
+      return
+    }
+    
+    if (!isOnline) {
+      showToast('Sin conexión a la base de datos', 'error')
+      return
+    }
     
     if (!texto.trim()) {
       showToast('Por favor, escribe un mensaje', 'error')
@@ -91,21 +124,37 @@ export default function WallDigital() {
     }
 
     setIsLoading(true)
-    setStatus('⏳ Publicando mensaje...')
+    showToast('Guardando mensaje...', 'loading')
 
     try {
+      console.log('💾 Guardando mensaje...')
+      console.log('Datos a insertar:', {
+        text: texto.trim(),
+        nickname: nombre.trim() || 'Anónimo',
+        position_x: clickPosition.xPercent,
+        position_y: clickPosition.yPercent
+      })
+
       const { data, error } = await supabase
         .from('messages')
         .insert([{
-          nombre: nombre.trim() || 'Anónimo',
-          texto: texto.trim(),
+          text: texto.trim(),
+          nickname: nombre.trim() || 'Anónimo',
           position_x: clickPosition.xPercent,
           position_y: clickPosition.yPercent
         }])
         .select()
-        .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Error insertando mensaje:', error)
+        throw error
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No se recibieron datos después de la inserción')
+      }
+
+      console.log('✅ Mensaje guardado exitosamente:', data[0])
 
       // Limpiar formulario
       setTexto('')
@@ -114,15 +163,25 @@ export default function WallDigital() {
       
       showToast('¡Mensaje publicado correctamente!', 'success')
       
-      // Recargar mensajes
-      await cargarMensajes()
+      // Recargar mensajes inmediatamente
+      setTimeout(cargarMensajes, 500)
 
     } catch (error) {
-      console.error('Error enviando mensaje:', error)
-      showToast('Error al publicar mensaje', 'error')
+      console.error('❌ Error enviando mensaje:', error)
+      
+      // Mensajes de error más específicos
+      if (error.message.includes('duplicate key')) {
+        showToast('Error: Mensaje duplicado', 'error')
+      } else if (error.message.includes('permission')) {
+        showToast('Error: Sin permisos para guardar', 'error')
+      } else if (error.message.includes('network')) {
+        showToast('Error: Problemas de conexión', 'error')
+        setIsOnline(false)
+      } else {
+        showToast(`Error al publicar: ${error.message}`, 'error')
+      }
     } finally {
       setIsLoading(false)
-      setStatus('')
     }
   }
 
@@ -132,7 +191,7 @@ export default function WallDigital() {
 
   const handleWallClick = (e) => {
     if (!isOnline) {
-      showToast('Sin conexión a Supabase', 'error')
+      showToast('Sin conexión a la base de datos', 'error')
       return
     }
     
@@ -140,22 +199,26 @@ export default function WallDigital() {
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     
-    setClickPosition({
+    const newPosition = {
       x,
       y,
-      xPercent: (x / rect.width) * 100,
-      yPercent: (y / rect.height) * 100
-    })
-  }
-
-  const showToast = (message, type) => {
-    setStatus(message)
-    setTimeout(() => setStatus(''), 3000)
+      xPercent: Math.max(5, Math.min(95, (x / rect.width) * 100)), // Limitar entre 5% y 95%
+      yPercent: Math.max(5, Math.min(95, (y / rect.height) * 100))
+    }
+    
+    setClickPosition(newPosition)
+    console.log('📍 Posición seleccionada:', newPosition)
   }
 
   const limpiarMensajesExpirados = () => {
     const now = Date.now()
-    setMensajes(prev => prev.filter(msg => msg.expirationTime > now))
+    setMensajes(prev => {
+      const activos = prev.filter(msg => msg.expirationTime > now)
+      if (activos.length !== prev.length) {
+        console.log(`🧹 Limpiados ${prev.length - activos.length} mensajes expirados`)
+      }
+      return activos
+    })
   }
 
   const getTimeLeft = (expirationTime) => {
@@ -177,34 +240,62 @@ export default function WallDigital() {
   // ========================================
 
   useEffect(() => {
+    let mounted = true
+    
     const init = async () => {
+      console.log('🚀 Inicializando WallDigital...')
+      
       const connected = await checkConnection()
-      if (connected) {
+      
+      if (connected && mounted) {
         await cargarMensajes()
+        
         // Actualizar mensajes cada 5 segundos
-        refreshIntervalRef.current = setInterval(cargarMensajes, 5000)
-      } else {
+        refreshIntervalRef.current = setInterval(() => {
+          if (mounted) {
+            cargarMensajes()
+          }
+        }, 5000)
+      } else if (mounted) {
         // Reintentar conexión cada 10 segundos
         const retryInterval = setInterval(async () => {
-          if (!isOnline) {
+          if (!isOnline && mounted) {
+            console.log('🔄 Reintentando conexión...')
             await checkConnection()
           }
         }, 10000)
         
-        return () => clearInterval(retryInterval)
+        return () => {
+          clearInterval(retryInterval)
+          mounted = false
+        }
       }
     }
 
     init()
 
     // Limpiar mensajes expirados cada segundo
-    const cleanupInterval = setInterval(limpiarMensajesExpirados, 1000)
+    const cleanupInterval = setInterval(() => {
+      if (mounted) {
+        limpiarMensajesExpirados()
+      }
+    }, 1000)
 
     return () => {
+      mounted = false
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current)
       }
       clearInterval(cleanupInterval)
+    }
+  }, []) // Solo ejecutar una vez al montar
+
+  useEffect(() => {
+    // Reiniciar intervalo cuando se reconecte
+    if (isOnline && !refreshIntervalRef.current) {
+      console.log('🔄 Reconectado, reiniciando auto-refresh...')
+      cargarMensajes()
+      refreshIntervalRef.current = setInterval(cargarMensajes, 5000)
     }
   }, [isOnline])
 
@@ -213,11 +304,18 @@ export default function WallDigital() {
   // ========================================
 
   const getButtonText = () => {
-    if (!isOnline) return '⌘ Sin conexión'
+    if (!isOnline) return '❌ Sin conexión'
     if (isLoading) return '⏳ Publicando...'
     if (clickPosition && texto.trim()) return '✅ Publicar Mensaje'
     if (clickPosition) return '💬 Escribe tu mensaje'
     return '📍 Haz clic en el muro primero'
+  }
+
+  const getButtonColor = () => {
+    if (!isOnline || isLoading) return '#cbd5e0'
+    if (clickPosition && texto.trim()) return 'linear-gradient(135deg, #48bb78, #38a169)'
+    if (clickPosition) return 'linear-gradient(135deg, #ed8936, #dd6b20)'
+    return 'linear-gradient(135deg, #4285f4, #1976d2)'
   }
 
   const isButtonDisabled = !texto.trim() || !clickPosition || isLoading || !isOnline
@@ -228,8 +326,34 @@ export default function WallDigital() {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       minHeight: '100vh',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      position: 'relative'
     }}>
+      {/* Toast de notificaciones */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: toastType === 'success' ? '#48bb78' : 
+                     toastType === 'error' ? '#f56565' : 
+                     toastType === 'loading' ? '#4285f4' : '#718096',
+          color: 'white',
+          padding: '16px 20px',
+          borderRadius: '10px',
+          zIndex: 10000,
+          maxWidth: '350px',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+          animation: 'slideIn 0.3s ease-out',
+          fontWeight: '600'
+        }}>
+          {toastType === 'success' && '✅ '}
+          {toastType === 'error' && '❌ '}
+          {toastType === 'loading' && '⏳ '}
+          {toastMessage}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         background: 'rgba(0, 0, 0, 0.3)',
@@ -294,7 +418,7 @@ export default function WallDigital() {
               width: '100%',
               height: '600px',
               overflow: 'hidden',
-              cursor: 'crosshair',
+              cursor: isOnline ? 'crosshair' : 'not-allowed',
               background: 'linear-gradient(45deg, #ff9a9e 0%, #fecfef 25%, #fecfef 50%, #a8edea 75%, #fed6e3 100%)',
               backgroundSize: '400% 400%',
               animation: 'gradientFlow 12s ease infinite'
@@ -332,7 +456,8 @@ export default function WallDigital() {
                   style={{
                     position: 'absolute',
                     background: 'rgba(255, 255, 255, 0.95)',
-                    border: '2px solid #4285f4',
+                    border: timeLeft.includes('s') && parseInt(timeLeft) < 20 ? 
+                           '2px solid #f56565' : '2px solid #4285f4',
                     borderRadius: '12px',
                     padding: '10px 14px',
                     minWidth: '130px',
@@ -341,7 +466,8 @@ export default function WallDigital() {
                     transform: 'translate(-50%, -50%)',
                     left: pixelX + 'px',
                     top: pixelY + 'px',
-                    zIndex: 100
+                    zIndex: 100,
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <div style={{
@@ -372,10 +498,12 @@ export default function WallDigital() {
                     color: '#e53e3e',
                     fontWeight: 'bold',
                     textAlign: 'center',
-                    background: 'rgba(229, 62, 62, 0.1)',
+                    background: timeLeft.includes('s') && parseInt(timeLeft) < 20 ? 
+                               'rgba(245, 101, 101, 0.2)' : 'rgba(229, 62, 62, 0.1)',
                     padding: '4px 8px',
                     borderRadius: '10px',
-                    border: '1px solid rgba(229, 62, 62, 0.3)'
+                    border: timeLeft.includes('s') && parseInt(timeLeft) < 20 ? 
+                           '1px solid rgba(245, 101, 101, 0.5)' : '1px solid rgba(229, 62, 62, 0.3)'
                   }}>
                     ⏰ {timeLeft}
                   </div>
@@ -435,13 +563,15 @@ export default function WallDigital() {
               onChange={(e) => setTexto(e.target.value)}
               placeholder="Escribe aquí tu mensaje..."
               maxLength="80"
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',
                 fontSize: '16px',
-                background: '#fafafa'
+                background: isLoading ? '#f7fafc' : '#fafafa',
+                opacity: isLoading ? 0.7 : 1
               }}
             />
           </div>
@@ -462,13 +592,15 @@ export default function WallDigital() {
               onChange={(e) => setNombre(e.target.value)}
               placeholder="¿Cómo te llamas?"
               maxLength="20"
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',
                 fontSize: '16px',
-                background: '#fafafa'
+                background: isLoading ? '#f7fafc' : '#fafafa',
+                opacity: isLoading ? 0.7 : 1
               }}
             />
           </div>
@@ -479,14 +611,16 @@ export default function WallDigital() {
             style={{
               width: '100%',
               padding: '16px',
-              background: isButtonDisabled ? '#cbd5e0' : 'linear-gradient(135deg, #4285f4, #1976d2)',
+              background: getButtonColor(),
               color: 'white',
               border: 'none',
               borderRadius: '12px',
               fontSize: '18px',
               fontWeight: 'bold',
               cursor: isButtonDisabled ? 'not-allowed' : 'pointer',
-              marginTop: '15px'
+              marginTop: '15px',
+              transition: 'all 0.3s ease',
+              transform: isLoading ? 'none' : 'translateY(0)',
             }}
           >
             {getButtonText()}
@@ -511,7 +645,8 @@ export default function WallDigital() {
                 height: '12px',
                 borderRadius: '50%',
                 marginRight: '10px',
-                background: isOnline ? '#48bb78' : '#f56565'
+                background: isOnline ? '#48bb78' : '#f56565',
+                animation: 'pulse 2s infinite'
               }} />
               <span>{isOnline ? 'Conectado a Supabase' : 'Sin conexión a Supabase'}</span>
             </div>
@@ -528,20 +663,6 @@ export default function WallDigital() {
               • ¡Todos verán tu mensaje por 1 minuto!
             </div>
           </div>
-
-          {status && (
-            <div style={{
-              marginTop: '15px',
-              padding: '10px',
-              borderRadius: '8px',
-              background: status.includes('Error') ? '#fee' : '#efe',
-              color: status.includes('Error') ? '#c53030' : '#38a169',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}>
-              {status}
-            </div>
-          )}
         </div>
       </div>
 
@@ -561,6 +682,22 @@ export default function WallDigital() {
             transform: translate(-50%, -50%) scale(3);
             opacity: 0;
           }
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </div>

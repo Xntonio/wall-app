@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Cambiar a standalone para Netlify
-  output: 'standalone',
+  // SIN output: 'export' - eso causa problemas con routing
   images: {
     unoptimized: true
   }

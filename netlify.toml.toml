@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Para Next.js con Pages Router
+[[redirects]]
+  from = "/*"
+  to = "/"
+  status = 200
+  force = true

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muro Digital - Mensajes Compartidos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            text-align: center;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .wall-section {
+            flex: 4;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .wall-container {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            overflow: hidden;
+            cursor: crosshair;
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 25%, #fecfef 50%, #a8edea 75%, #fed6e3 100%);
+            background-size: 400% 400%;
+            animation: gradientFlow 12s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .wall-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+                linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(255, 255, 255, 0.08) 100%);
+        }
+
+        .wall-title {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 10;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .message-overlay {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid #4285f4;
+            border-radius: 12px;
+            padding: 10px 14px;
+            min-width: 130px;
+            max-width: 280px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            transform: translate(-50%, -50%);
+            cursor: default;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            animation: messageAppear 0.5s ease-out forwards;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .message-overlay:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+            border-color: #1976d2;
+        }
+
+        .message-content {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            color: #333;
+        }
+
+        .message-nickname {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .message-timer {
+            font-size: 10px;
+            color: #e53e3e;
+            font-weight: bold;
+            text-align: center;
+            background: rgba(229, 62, 62, 0.1);
+            padding: 4px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(229, 62, 62, 0.3);
+        }
+
+        .controls-section {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            height: fit-content;
+        }
+
+        .controls-title {
+            font-size: 26px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4285f4;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+
+        .add-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4285f4, #1976d2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .add-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(66, 133, 244, 0.4);
+        }
+
+        .add-button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .add-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 12px;
+            border-left: 5px solid #4285f4;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background: #48bb78;
+        }
+
+        .status-offline {
+            background: #f56565;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .instructions {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .click-indicator {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: #4285f4;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: clickPulse 0.6s ease-out;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes clickPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3);
+                opacity: 0;
+            }
+        }
+
+        .message-count {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f56565;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 10px;
+            z-index: 10000;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(245, 101, 101, 0.3);
+            animation: slideIn 0.3s ease-out;
+            font-weight: 600;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+                padding: 15px;
+            }
+            
+            .wall-container {
+                height: 500px;
+            }
+            
+            .controls-section {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .wall-container {
+                height: 400px;
+            }
+            
+            .controls-section {
+                padding: 20px;
+            }
+
+            .controls-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ðŸŒ Muro Digital Compartido</h1>
+        <p>Mensajes temporales visibles para todos â€¢ DuraciÃ³n: 1 minuto</p>
+    </div>
+
+    <div class="container">
+        <div class="wall-section">
+            <div class="wall-title">Muro Colaborativo</div>
+            
+            <div class="wall-container" id="wallContainer">
+                <div class="wall-overlay"></div>
+            </div>
+
+            <div class="message-count" id="messageCount">
+                Conectando...
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <h2 class="controls-title">Nuevo Mensaje</h2>
+            
+            <div class="form-group">
+                <label class="form-label" for="textInput">ðŸ’¬ Tu Mensaje:</label>
+                <input type="text" id="textInput" class="form-input" placeholder="Escribe aquÃ­ tu mensaje..." maxlength="80" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="nicknameInput">ðŸ‘¤ Tu Nombre:</label>
+                <input type="text" id="nicknameInput" class="form-input" placeholder="Â¿CÃ³mo te llamas?" maxlength="20" autocomplete="off">
+            </div>
+
+            <button class="add-button" id="addButton" onclick="addMessage()">
+                ðŸ“ Selecciona ubicaciÃ³n en el muro
+            </button>
+
+            <div class="status-section">
+                <div class="connection-status" id="connectionStatus">
+                    <div class="status-indicator status-offline" id="statusIndicator"></div>
+                    <span id="statusText">Conectando al servidor...</span>
+                </div>
+                
+                <div class="instructions">
+                    <strong>ðŸ“‹ CÃ³mo usar:</strong><br>
+                    â€¢ Haz clic donde quieres tu mensaje<br>
+                    â€¢ Escribe tu texto y nombre<br>
+                    â€¢ Presiona el botÃ³n para publicar<br>
+                    â€¢ Â¡Todos verÃ¡n tu mensaje por 1 minuto!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // CONFIGURACIÃ“N Y VARIABLES GLOBALES
+        // ========================================
+        
+        const API_BASE = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api'
+            : '/api'; // Cambia por tu URL de producciÃ³n
+        
+        let clickPosition = { x: 0, y: 0 };
+        let hasClickPosition = false;
+        let messageCount = 0;
+        let messages = new Map();
+        let isLoading = false;
+        let isOnline = false;
+        let refreshInterval = null;
+
+        // Referencias DOM
+        const wallContainer = document.getElementById('wallContainer');
+        const textInput = document.getElementById('textInput');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const addButton = document.getElementById('addButton');
+        const messageCountDisplay = document.getElementById('messageCount');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+
+        // ========================================
+        // FUNCIONES DE CONEXIÃ“N Y API
+        // ========================================
+
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/messages`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    setOnlineStatus(true);
+                    return true;
+                }
+                throw new Error('Server unavailable');
+            } catch (error) {
+                setOnlineStatus(false);
+                return false;
+            }
+        }
+
+        function setOnlineStatus(online) {
+            isOnline = online;
+            statusIndicator.className = `status-indicator ${online ? 'status-online' : 'status-offline'}`;
+            statusText.textContent = online ? 'Conectado al servidor' : 'Sin conexiÃ³n al servidor';
+            
+            if (online && !refreshInterval) {
+                startAutoRefresh();
+            } else if (!online && refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        async function loadMessages() {
+            if (!isOnline) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/messages`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const serverMessages = await response.json();
+                
+                // Limpiar mensajes existentes
+                messages.clear();
+                const existingMessages = wallContainer.querySelectorAll('.message-overlay');
+                existingMessages.forEach(msg => msg.remove());
+                
+                // Agregar mensajes del servidor
+                serverMessages.forEach(msgData => {
+                    createMessageElement(msgData);
+                });
+                
+                messageCount = serverMessages.length;
+                updateMessageCount();
+                
+            } catch (error) {
+                console.error('Error cargando mensajes:', error);
+                setOnlineStatus(false);
+                showError('Error conectando al servidor. Reintentando...');
+            }
+        }
+
+        function startAutoRefresh() {
+            loadMessages(); // Cargar inmediatamente
+            refreshInterval = setInterval(loadMessages, 3000); // Cada 3 segundos
+        }
+
+        // ========================================
+        // FUNCIONES DE MENSAJES
+        // ========================================
+
+        function createMessageElement(msgData) {
+            const messageOverlay = document.createElement('div');
+            messageOverlay.className = 'message-overlay';
+            
+            // Convertir porcentaje a pÃ­xeles
+            const rect = wallContainer.getBoundingClientRect();
+            const pixelX = (msgData.x / 100) * rect.width;
+            const pixelY = (msgData.y / 100) * rect.height;
+            
+            messageOverlay.style.left = pixelX + 'px';
+            messageOverlay.style.top = pixelY + 'px';
+            messageOverlay.setAttribute('data-id', msgData.id);
+
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = msgData.text;
+            messageOverlay.appendChild(messageContent);
+
+            if (msgData.nickname) {
+                const nicknameContent = document.createElement('div');
+                nicknameContent.className = 'message-nickname';
+                nicknameContent.textContent = `â€” ${msgData.nickname}`;
+                messageOverlay.appendChild(nicknameContent);
+            }
+
+            const timerContent = document.createElement('div');
+            timerContent.className = 'message-timer';
+            messageOverlay.appendChild(timerContent);
+
+            wallContainer.appendChild(messageOverlay);
+
+            // Guardar en el mapa local
+            messages.set(msgData.id, {
+                element: messageOverlay,
+                expirationTime: msgData.expirationTime,
+                timerElement: timerContent,
+                fromServer: true
+            });
+        }
+
+        async function addMessage() {
+            if (isLoading || !isOnline) return;
+            
+            const text = textInput.value.trim();
+            const nickname = nicknameInput.value.trim();
+
+            if (!text) {
+                showError('Por favor, escribe un mensaje');
+                textInput.focus();
+                return;
+            }
+
+            if (!hasClickPosition) {
+                showError('Primero haz clic en el muro donde quieres colocar tu mensaje');
+                return;
+            }
+
+            isLoading = true;
+            addButton.disabled = true;
+            addButton.textContent = 'â³ Publicando mensaje...';
+
+            try {
+                const response = await fetch(`${API_BASE}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: text,
+                        nickname: nickname,
+                        x: clickPosition.xPercent,
+                        y: clickPosition.yPercent
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+
+                const newMessage = await response.json();
+                
+                // Crear elemento visual
+                createMessageElement(newMessage);
+                
+                // Limpiar inputs y resetear estado
+                textInput.value = '';
+                nicknameInput.value = '';
+                hasClickPosition = false;
+                messageCount++;
+                updateMessageCount();
+
+                // Mostrar confirmaciÃ³n
+                showSuccess('Â¡Mensaje publicado correctamente!');
+
+            } catch (error) {
+                console.error('Error enviando mensaje:', error);
+                setOnlineStatus(false);
+                showError('Error al publicar mensaje. Verifica tu conexiÃ³n.');
+            } finally {
+                isLoading = false;
+                updateAddButton();
+            }
+        }
+
+        // ========================================
+        // FUNCIONES DE INTERFAZ
+        // ========================================
+
+        wallContainer.addEventListener('click', function(e) {
+            if (!isOnline) {
+                showError('Sin conexiÃ³n al servidor');
+                return;
+            }
+            
+            const rect = wallContainer.getBoundingClientRect();
+            
+            clickPosition.x = e.clientX - rect.left;
+            clickPosition.y = e.clientY - rect.top;
+            clickPosition.xPercent = (clickPosition.x / rect.width) * 100;
+            clickPosition.yPercent = (clickPosition.y / rect.height) * 100;
+            
+            hasClickPosition = true;
+            showClickIndicator(clickPosition.x, clickPosition.y);
+            updateAddButton();
+        });
+
+        function showClickIndicator(x, y) {
+            const indicator = document.createElement('div');
+            indicator.className = 'click-indicator';
+            indicator.style.left = x + 'px';
+            indicator.style.top = y + 'px';
+
+            wallContainer.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (wallContainer.contains(indicator)) {
+                    wallContainer.removeChild(indicator);
+                }
+            }, 600);
+        }
+
+        function updateTimers() {
+            const now = Date.now();
+            
+            messages.forEach((messageData, messageId) => {
+                const timeLeft = messageData.expirationTime - now;
+                
+                if (timeLeft <= 0) {
+                    // Eliminar mensaje expirado
+                    if (wallContainer.contains(messageData.element)) {
+                        messageData.element.style.animation = 'messageAppear 0.3s ease-out reverse';
+                        
+                        setTimeout(() => {
+                            if (wallContainer.contains(messageData.element)) {
+                                wallContainer.removeChild(messageData.element);
+                            }
+                        }, 300);
+                    }
+                    messages.delete(messageId);
+                    messageCount--;
+                    updateMessageCount();
+                } else {
+                    // Actualizar contador
+                    const seconds = Math.ceil(timeLeft / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    
+                    if (minutes > 0) {
+                        messageData.timerElement.textContent = `â° ${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+                    } else {
+                        messageData.timerElement.textContent = `â° ${remainingSeconds}s`;
+                    }
+                    
+                    // Cambiar color cuando quedan menos de 20 segundos
+                    if (timeLeft < 20000) {
+                        messageData.element.style.borderColor = '#f56565';
+                        messageData.timerElement.style.background = 'rgba(245, 101, 101, 0.2)';
+                        messageData.timerElement.style.borderColor = 'rgba(245, 101, 101, 0.5)';
+                    }
+                }
+            });
+        }
+
+        function updateMessageCount() {
+            messageCountDisplay.textContent = `Mensajes activos: ${messageCount}`;
+        }
+
+        function updateAddButton() {
+            const hasText = textInput.value.trim().length > 0;
+            addButton.disabled = !hasText || !hasClickPosition || isLoading || !isOnline;
+            
+            if (!isOnline) {
+                addButton.textContent = 'âŒ Sin conexiÃ³n';
+                addButton.style.background = '#cbd5e0';
+            } else if (isLoading) {
+                // Ya se maneja en addMessage()
+            } else if (hasClickPosition && hasText) {
+                addButton.textContent = 'âœ… Publicar Mensaje';
+                addButton.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+            } else if (hasClickPosition) {
+                addButton.textContent = 'ðŸ’¬ Escribe tu mensaje';
+                addButton.style.background = 'linear-gradient(135deg, #ed8936, #dd6b20)';
+            } else {
+                addButton.textContent = 'ðŸ“ Haz clic en el muro primero';
+                addButton.style.background = 'linear-gradient(135deg, #4285f4, #1976d2)';
+            }
+        }
+
+        function showError(message) {
+            showToast(message, '#f56565');
+        }
+
+        function showSuccess(message) {
+            showToast(message, '#48bb78');
+        }
+
+        function showToast(message, color) {
+            const existing = document.querySelector('.error-toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.style.background = color;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 4000);
+        }
+
+        // ========================================
+        // EVENT LISTENERS
+        // ========================================
+
+        textInput.addEventListener('input', updateAddButton);
+        nicknameInput.addEventListener('input', updateAddButton);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (textInput === document.activeElement || nicknameInput === document.activeElement)) {
+                if (!addButton.disabled) {
+                    addMessage();
+                }
+            }
+        });
+
+        // ========================================
+        // INICIALIZACIÃ“N
+        // ========================================
+
+        async function init() {
+            console.log('ðŸš€ Iniciando Muro Digital...');
+            
+            updateAddButton();
+            updateMessageCount();
+            
+            // Verificar conexiÃ³n inicial
+            const connected = await checkConnection();
+            
+            if (connected) {
+                console.log('âœ… Conectado al servidor');
+                loadMessages();
+            } else {
+                console.log('âŒ Sin conexiÃ³n inicial');
+                // Reintentar conexiÃ³n cada 10 segundos
+                setInterval(async () => {
+                    if (!isOnline) {
+                        console.log('ðŸ”„ Reintentando conexiÃ³n...');
+                        await checkConnection();
+                    }
+                }, 10000);
+            }
+            
+            // Iniciar actualizaciÃ³n de temporizadores
+            setInterval(updateTimers, 1000);
+            
+            console.log('ðŸŽ‰ AplicaciÃ³n inicializada');
+        }
+
+        // Iniciar aplicaciÃ³n cuando se carga la pÃ¡gina
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

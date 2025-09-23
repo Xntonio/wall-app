@@ -1,19 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import supabase from '../lib/supabaseClient'
 
 export default function AddNote() {
   const [nombre, setNombre] = useState('')
   const [texto, setNota] = useState('')
   const [status, setStatus] = useState('')
+  const [notas, setNotas] = useState([]) // Estado para guardar las notas
+
+  // Función para cargar las notas desde la BD
+  const cargarNotas = async () => {
+    const { data, error } = await supabase
+      .from('Notes')
+      .select('*')
+      .order('id', { ascending: false }) // las más nuevas primero
+
+    if (error) {
+      console.error('Error al leer notas:', error)
+      setStatus(`❌ Error al cargar notas: ${error.message}`)
+    } else {
+      setNotas(data)
+    }
+  }
+
+  // Cargar notas al inicio
+  useEffect(() => {
+    cargarNotas()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setStatus('⏳ Guardando...')
 
     try {
-      // Debug: verificar la conexión
-      console.log('Intentando insertar:', { nombre, texto })
-      
       const { data, error } = await supabase
         .from('Notes')
         .insert([{ nombre, texto }])
@@ -23,10 +41,10 @@ export default function AddNote() {
         console.error('Error completo:', error)
         setStatus(`❌ Error: ${error.message}`)
       } else {
-        console.log('Datos insertados:', data)
         setStatus('✅ Nota guardada')
         setNombre('')
         setNota('')
+        cargarNotas() // recargar notas después de guardar
       }
     } catch (err) {
       console.error('Error de conexión:', err)
@@ -57,6 +75,15 @@ export default function AddNote() {
         <button type="submit">Guardar</button>
       </form>
       <p>{status}</p>
+
+      <h2>Notas guardadas</h2>
+      <ul>
+        {notas.map((n) => (
+          <li key={n.id}>
+            <strong>{n.nombre}</strong>: {n.texto}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

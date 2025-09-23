@@ -76,7 +76,7 @@ export default function AddNote() {
       </form>
       <p>{status}</p>
 
-      <h2>Notas guardadas</h2>
+      <h2>Notas:</h2>
       <ul>
         {notas.map((n) => (
           <li key={n.id}>

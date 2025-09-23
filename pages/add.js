@@ -29,7 +29,7 @@ export default function WallDigital() {
   const checkConnection = async () => {
     try {
       const { data, error } = await supabase
-        .from('Notes')
+        .from('messages')
         .select('count', { count: 'exact' })
         .limit(1)
       
@@ -51,7 +51,7 @@ export default function WallDigital() {
       const oneMinuteAgo = now - (60 * 1000)
       
       const { data, error } = await supabase
-        .from('Notes')
+        .from('messages')
         .select('*')
         .gte('created_at', new Date(oneMinuteAgo).toISOString())
         .order('created_at', { ascending: false })
@@ -95,7 +95,7 @@ export default function WallDigital() {
 
     try {
       const { data, error } = await supabase
-        .from('Notes')
+        .from('messages')
         .insert([{
           nombre: nombre.trim() || 'Anónimo',
           texto: texto.trim(),

@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { useState, useEffect } from 'react'
+import supabase from '../lib/supabaseClient'
+//import { useState, useEffect, useRef } from 'react'
+//import { createClient } from '@supabase/supabase-js'
 
 // REEMPLAZA CON TUS CREDENCIALES DE SUPABASE
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tu-proyecto.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'tu-clave-publica'
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+//const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tu-proyecto.supabase.co'
+//const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'tu-clave-publica'
+//const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default function WallDigital() {
   // Estados

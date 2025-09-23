@@ -68,8 +68,10 @@ export default function WallDigital() {
       console.log('📥 Cargando mensajes...')
       
       const now = new Date()
-      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
-      
+      const oneMinuteAgo = new Date(now.getTime() - (60))
+      //const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
+
+
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -555,17 +557,17 @@ export default function WallDigital() {
               marginBottom: '8px',
               fontSize: '15px'
             }}>
-              💬 Tu Mensaje:
+                👤 Tu Nombre:
             </label>
             <input
               type="text"
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              placeholder="Escribe aquí tu mensaje..."
-              maxLength="80"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="¿Cómo te llamas?"
+              maxLength="15" 
               disabled={isLoading}
               style={{
-                width: '100%',
+                width: '90%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',
@@ -584,17 +586,19 @@ export default function WallDigital() {
               marginBottom: '8px',
               fontSize: '15px'
             }}>
-              👤 Tu Nombre:
+            
+              💬 Tu Mensaje:
             </label>
             <input
               type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="¿Cómo te llamas?"
-              maxLength="20"
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Escribe aquí tu mensaje..."
+              maxLength="50"
               disabled={isLoading}
               style={{
-                width: '100%',
+                width: '90%',
+                height:'200px',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',

@@ -69,7 +69,7 @@ export default function WallDigital() {
       
       const now = new Date()
       //const oneMinuteAgo = new Date(now.getTime() - (60))
-      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
+      const oneMinuteAgo = new Date(now.getTime() - (10 * 1))
 
 
       const { data, error } = await supabase
@@ -94,7 +94,7 @@ export default function WallDigital() {
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: new Date(msg.created_at).getTime(),
         //expirationTime: new Date(msg.created_at).getTime() + (60 * 1000)
-        expirationTime: new Date(msg.created_at).getTime() + (60)
+        expirationTime: new Date(msg.created_at).getTime() + (10)
       }))
 
       setMensajes(mensajesConTimer)
@@ -167,7 +167,7 @@ export default function WallDigital() {
       showToast('¡Mensaje publicado correctamente!', 'success')
       
       // Recargar mensajes inmediatamente
-      setTimeout(cargarMensajes, 500)
+      setTimeout(cargarMensajes, 50)
 
     } catch (error) {
       console.error('❌ Error enviando mensaje:', error)

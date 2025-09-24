@@ -68,8 +68,8 @@ export default function WallDigital() {
       console.log('📥 Cargando mensajes...')
       
       const now = new Date()
-      const oneMinuteAgo = new Date(now.getTime() - (60))
-      //const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
+      //const oneMinuteAgo = new Date(now.getTime() - (60))
+      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
 
 
       const { data, error } = await supabase
@@ -93,7 +93,8 @@ export default function WallDigital() {
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: new Date(msg.created_at).getTime(),
-        expirationTime: new Date(msg.created_at).getTime() + (60 * 1000)
+        //expirationTime: new Date(msg.created_at).getTime() + (60 * 1000)
+        expirationTime: new Date(msg.created_at).getTime() + (60)
       }))
 
       setMensajes(mensajesConTimer)

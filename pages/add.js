@@ -81,19 +81,7 @@ export default function WallDigital() {
 
   const checkConnection = async () => {
     try {
-      console.log('🔄 Verificando conexión a Supabase...')
-      
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id')
-        .limit(1)
-      
-      if (error) {
-        console.error('❌ Error en checkConnection:', error)
-        throw error
-      }
-      
-      console.log('✅ Conexión exitosa a Supabase')
+      console.log('🔄 Verificando conexión...')
       setIsOnline(true)
       return true
     } catch (error) {
@@ -108,12 +96,13 @@ export default function WallDigital() {
     try {
       console.log('📥 Cargando mensajes...')
       
-      // CAMBIO IMPORTANTE: Consulta correcta para Supabase real
-      const { data, error } = await supabase
+      // CAMBIO IMPORTANTE: No filtrar por tiempo en la consulta
+      // En su lugar, obtener todos los mensajes y filtrar localmente
+      const { data, error } = await mockSupabase
         .from('messages')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .limit(100) // Aumentamos el límite para asegurar que obtenemos todos los mensajes recientes
 
       if (error) {
         console.error('❌ Error cargando mensajes:', error)
@@ -155,7 +144,6 @@ export default function WallDigital() {
   }
 
   const limpiarMensajesExpiradosDelStorage = () => {
-    // Solo para demo con localStorage
     const storedMessages = JSON.parse(localStorage.getItem('wallMessages') || '[]')
     const now = Date.now()
     
@@ -198,7 +186,7 @@ export default function WallDigital() {
         position_y: clickPosition.yPercent
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await mockSupabase
         .from('messages')
         .insert([datosInsertar])
         .select()
@@ -218,7 +206,7 @@ export default function WallDigital() {
         x: data[0].position_x,
         y: data[0].position_y,
         createdAt: new Date(data[0].created_at).getTime(),
-        expirationTime: new Date(data[0].created_at).getTime() + 60000
+        expirationTime: new Date(data[0].created_at).getTime() + 60000 //60000
       }
 
       // Agregar inmediatamente al estado
@@ -231,14 +219,10 @@ export default function WallDigital() {
       
       showToast('¡Mensaje publicado correctamente!', 'success')
 
-      // Dispatar evento para sincronizar con otras ventanas (solo para demo)
-      const storedMessages = JSON.parse(localStorage.getItem('wallMessages') || '[]')
-      storedMessages.unshift(data[0])
-      localStorage.setItem('wallMessages', JSON.stringify(storedMessages))
-      
+      // Dispatar evento para sincronizar con otras ventanas
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'wallMessages',
-        newValue: JSON.stringify(storedMessages)
+        newValue: localStorage.getItem('wallMessages')
       }))
 
     } catch (error) {

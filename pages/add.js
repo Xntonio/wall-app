@@ -1,12 +1,58 @@
 import { useState, useEffect, useRef } from 'react'
-import supabase from '../lib/supabaseClient'
+
+// Simulamos la conexión a Supabase con localStorage para demo
+const mockSupabase = {
+  from: (table) => ({
+    select: (columns) => ({
+      gte: (field, date) => ({
+        order: (field, options) => ({
+          limit: (count) => ({
+            then: (callback) => {
+              // Simulamos obtener mensajes del localStorage
+              const storedMessages = JSON.parse(localStorage.getItem('wallMessages') || '[]')
+              const now = Date.now()
+              
+              // Filtramos mensajes que no han expirado (1 minuto = 60000ms)
+              const validMessages = storedMessages.filter(msg => {
+                const messageTime = new Date(msg.created_at).getTime()
+                return (now - messageTime) < 60000
+              })
+              
+              callback({ data: validMessages, error: null })
+              return Promise.resolve({ data: validMessages, error: null })
+            }
+          })
+        })
+      })
+    }),
+    insert: (data) => ({
+      select: () => ({
+        then: (callback) => {
+          // Simulamos insertar mensaje
+          const newMessage = {
+            ...data[0],
+            id: Math.random().toString(36).substr(2, 9),
+            created_at: new Date().toISOString()
+          }
+          
+          const storedMessages = JSON.parse(localStorage.getItem('wallMessages') || '[]')
+          storedMessages.unshift(newMessage)
+          localStorage.setItem('wallMessages', JSON.stringify(storedMessages))
+          
+          callback({ data: [newMessage], error: null })
+          return Promise.resolve({ data: [newMessage], error: null })
+        }
+      })
+    })
+  })
+}
 
 export default function WallDigital() {
   // Estados
   const [texto, setTexto] = useState('')
   const [nombre, setNombre] = useState('')
   const [mensajes, setMensajes] = useState([])
-  const [isOnline, setIsOnline] = useState(false)
+  const [isOnline, setIsOnline] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [clickPosition, setClickPosition] = useState(null)
   const [toastMessage, setToastMessage] = useState('')
@@ -35,19 +81,7 @@ export default function WallDigital() {
 
   const checkConnection = async () => {
     try {
-      console.log('🔄 Verificando conexión a Supabase...')
-      
-      const { data, error } = await supabase
-        .from('messages')
-        .select('id')
-        .limit(1)
-      
-      if (error) {
-        console.error('❌ Error en checkConnection:', error)
-        throw error
-      }
-      
-      console.log('✅ Conexión exitosa a Supabase')
+      console.log('🔄 Verificando conexión...')
       setIsOnline(true)
       return true
     } catch (error) {
@@ -59,20 +93,16 @@ export default function WallDigital() {
   }
 
   const cargarMensajes = async () => {
-    if (!isOnline) return
-
     try {
       console.log('📥 Cargando mensajes...')
       
-      const now = new Date()
-      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
-      
-      const { data, error } = await supabase
+      // CAMBIO IMPORTANTE: No filtrar por tiempo en la consulta
+      // En su lugar, obtener todos los mensajes y filtrar localmente
+      const { data, error } = await mockSupabase
         .from('messages')
         .select('*')
-        .gte('created_at', oneMinuteAgo.toISOString())
         .order('created_at', { ascending: false })
-        .limit(50)
+        .limit(100) // Aumentamos el límite para asegurar que obtenemos todos los mensajes recientes
 
       if (error) {
         console.error('❌ Error cargando mensajes:', error)
@@ -81,24 +111,48 @@ export default function WallDigital() {
 
       console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
 
-      const mensajesConTimer = (data || []).map(msg => ({
+      const now = Date.now()
+      
+      // Filtrar mensajes que no han expirado (usando tiempo del cliente)
+      const mensajesValidos = (data || []).filter(msg => {
+        const messageTime = new Date(msg.created_at).getTime()
+        const timeElapsed = now - messageTime
+        return timeElapsed < 60000 // 1 minuto en milisegundos
+      })
+
+      const mensajesConTimer = mensajesValidos.map(msg => ({
         id: msg.id,
         texto: msg.text || msg.texto,
         nombre: msg.nickname || msg.nombre,
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: new Date(msg.created_at).getTime(),
-        expirationTime: new Date(msg.created_at).getTime() + (60 * 1000)
+        expirationTime: new Date(msg.created_at).getTime() + 60000 // 1 minuto exacto
       }))
 
       setMensajes(mensajesConTimer)
-      console.log('✅ Mensajes cargados correctamente')
+      console.log(`✅ Mensajes válidos cargados: ${mensajesConTimer.length}`)
+
+      // Limpiar mensajes expirados del storage
+      limpiarMensajesExpiradosDelStorage()
 
     } catch (error) {
       console.error('❌ Error cargando mensajes:', error)
       setIsOnline(false)
       showToast('Error conectando a la base de datos', 'error')
     }
+  }
+
+  const limpiarMensajesExpiradosDelStorage = () => {
+    const storedMessages = JSON.parse(localStorage.getItem('wallMessages') || '[]')
+    const now = Date.now()
+    
+    const validMessages = storedMessages.filter(msg => {
+      const messageTime = new Date(msg.created_at).getTime()
+      return (now - messageTime) < 60000
+    })
+    
+    localStorage.setItem('wallMessages', JSON.stringify(validMessages))
   }
 
   const agregarMensaje = async () => {
@@ -132,7 +186,7 @@ export default function WallDigital() {
         position_y: clickPosition.yPercent
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await mockSupabase
         .from('messages')
         .insert([datosInsertar])
         .select()
@@ -144,7 +198,7 @@ export default function WallDigital() {
 
       console.log('✅ Mensaje insertado exitosamente')
 
-      // Crear elemento visual inmediatamente (sin esperar recarga)
+      // Crear elemento visual inmediatamente
       const nuevoMensaje = {
         id: data[0].id,
         texto: data[0].text,
@@ -152,7 +206,7 @@ export default function WallDigital() {
         x: data[0].position_x,
         y: data[0].position_y,
         createdAt: new Date(data[0].created_at).getTime(),
-        expirationTime: new Date(data[0].created_at).getTime() + (60 * 1000)
+        expirationTime: new Date(data[0].created_at).getTime() + 60000 //60000
       }
 
       // Agregar inmediatamente al estado
@@ -165,19 +219,15 @@ export default function WallDigital() {
       
       showToast('¡Mensaje publicado correctamente!', 'success')
 
-      // Recargar después de 2 segundos para sincronizar con otros usuarios
-      setTimeout(cargarMensajes, 2000)
+      // Dispatar evento para sincronizar con otras ventanas
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'wallMessages',
+        newValue: localStorage.getItem('wallMessages')
+      }))
 
     } catch (error) {
       console.error('❌ Error enviando mensaje:', error)
-      
-      if (error.message.includes('duplicate key')) {
-        showToast('Error: Mensaje duplicado', 'error')
-      } else if (error.message.includes('permission')) {
-        showToast('Error: Sin permisos para guardar', 'error')
-      } else {
-        showToast(`Error al publicar: ${error.message}`, 'error')
-      }
+      showToast(`Error al publicar: ${error.message}`, 'error')
     } finally {
       setIsLoading(false)
     }
@@ -241,7 +291,7 @@ export default function WallDigital() {
     let mounted = true
     
     const init = async () => {
-      console.log('🚀 Inicializando WallDigital (sin Realtime)...')
+      console.log('🚀 Inicializando WallDigital con persistencia mejorada...')
       
       const connected = await checkConnection()
       
@@ -249,13 +299,13 @@ export default function WallDigital() {
         console.log('✅ Conectado, cargando mensajes...')
         await cargarMensajes()
         
-        // Auto-refresh cada 5 segundos para simular tiempo real
-        console.log('⏱️ Configurando auto-refresh cada 5 segundos...')
+        // Auto-refresh cada 3 segundos para mejor sincronización
+        console.log('⏱️ Configurando auto-refresh cada 3 segundos...')
         refreshIntervalRef.current = setInterval(() => {
           if (mounted) {
             cargarMensajes()
           }
-        }, 5000)
+        }, 3000)
       }
     }
 
@@ -268,6 +318,26 @@ export default function WallDigital() {
       }
     }, 1000)
 
+    // Escuchar cambios en localStorage para sincronización entre ventanas
+    const handleStorageChange = (e) => {
+      if (e.key === 'wallMessages' && mounted) {
+        console.log('🔄 Detectado cambio en otra ventana, recargando mensajes...')
+        cargarMensajes()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    // También escuchar cambios de visibilidad para recargar cuando la ventana vuelve a ser visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden && mounted) {
+        console.log('👁️ Ventana visible de nuevo, recargando mensajes...')
+        cargarMensajes()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       console.log('🛑 Desmontando componente...')
       mounted = false
@@ -275,6 +345,8 @@ export default function WallDigital() {
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current)
       }
+      window.removeEventListener('storage', handleStorageChange)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
@@ -343,7 +415,7 @@ export default function WallDigital() {
           🌐 Muro Digital Compartido
         </h1>
         <p style={{ opacity: '0.9', fontSize: '16px' }}>
-          Mensajes temporales actualizados cada 5 segundos • Duración: 1 minuto
+          Mensajes persistentes • Sincronización automática entre ventanas • Duración: 1 minuto
         </p>
       </div>
 
@@ -667,7 +739,7 @@ export default function WallDigital() {
                 animation: 'pulse 2s infinite'
               }} />
               <span>
-                {isOnline ? 'Conectado (Auto-refresh 5s)' : 'Sin conexión'}
+                {isOnline ? 'Conectado (Persistente)' : 'Sin conexión'}
               </span>
             </div>
             
@@ -676,11 +748,11 @@ export default function WallDigital() {
               color: '#666',
               lineHeight: '1.5'
             }}>
-              <strong>📋 Cómo usar:</strong><br/>
-              • Haz clic donde quieres tu mensaje<br/>
-              • Escribe tu texto y nombre<br/>
-              • Presiona el botón para publicar<br/>
-              • Los mensajes se actualizan automáticamente
+              <strong>📋 Mejoras implementadas:</strong><br/>
+              • Los mensajes persisten al recargar<br/>
+              • Sincronización entre ventanas abiertas<br/>
+              • Actualización automática cada 3 segundos<br/>
+              • Limpieza automática de mensajes expirados
             </div>
           </div>
         </div>

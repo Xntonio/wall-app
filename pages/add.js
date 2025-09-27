@@ -223,7 +223,7 @@ const getTimeLeft = (expirationTime) => {
   const diff = expirationTime - Date.now()
   if (diff <= 0) return null
 
-  const seconds = Math.ceil(diff / 1000) // convertir ms a segundos
+  const seconds = Math.ceil(diff / 1000000) // convertir ms a segundos
   return `${seconds}s`
 }
 

@@ -88,7 +88,7 @@ export default function WallDigital() {
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: new Date(msg.created_at).getTime(),
-        expirationTime: new Date(msg.created_at).getTime() + (60 * 1000)
+        expirationTime: new Date(msg.created_at).getTime() + (30 * 1000)
       }))
 
       setMensajes(mensajesConTimer)
@@ -152,7 +152,7 @@ export default function WallDigital() {
         x: data[0].position_x,
         y: data[0].position_y,
         createdAt: new Date(data[0].created_at).getTime(),
-        expirationTime: new Date(data[0].created_at).getTime() + (60 * 1000)
+        expirationTime: new Date(data[0].created_at).getTime() + (30 * 1000)
       }
 
       // Agregar inmediatamente al estado
@@ -219,19 +219,14 @@ export default function WallDigital() {
     })
   }
 
-  const getTimeLeft = (expirationTime) => {
-    const timeLeft = expirationTime - Date.now()
-    if (timeLeft <= 0) return null
-    
-    const seconds = Math.ceil(timeLeft / 1000)
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    
-    if (minutes > 0) {
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-    }
-    return `${remainingSeconds}s`
-  }
+const getTimeLeft = (expirationTime) => {
+  const timeLeft = expirationTime - Date.now()
+  if (timeLeft <= 0) return null
+
+  const seconds = Math.ceil(timeLeft / 1000)
+  return `${seconds}s`
+}
+
 
   // ========================================
   // EFECTOS

@@ -58,54 +58,42 @@ export default function WallDigital() {
     }
   }
 
- const cargarMensajes = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(30)
+  const cargarMensajes = async () => {
+    if (!isOnline) return
 
-    if (error) throw error
+    try {
+      console.log('📥 Cargando mensajes...')
+      
+      const now = new Date()
+      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
+      
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .gte('created_at', oneMinuteAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50)
 
-    const mensajesConTimer = (data || []).map(msg => {
-      // 👇 Aseguramos que siempre exista un valor de fecha válido
-      const createdAt = msg.created_at
-        ? new Date(msg.created_at).getTime()
-        : Date.now()
-
-      return {
-        id: msg.id,
-        texto: msg.text || msg.texto,
-        nombre: msg.nickname || msg.nombre,
-        x: msg.position_x || Math.random() * 80 + 10,
-        y: msg.position_y || Math.random() * 80 + 10,
-        createdAt, // usamos la constante correcta
-        expirationTime: createdAt + (30 * 1000)
+      if (error) {
+        console.error('❌ Error cargando mensajes:', error)
+        throw error
       }
-    })
-
-    setMensajes(mensajesConTimer)
-    setIsOnline(true)
-  } catch (error) {
-    console.error('❌ Error cargando mensajes:', error)
-    showToast('Error cargando mensajes', 'error')
-    // OJO: ya no ponemos setIsOnline(false) aquí para que no "desconecte" la app
-  }
-}
-
 
       console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
 
-      const mensajesConTimer = (data || []).map(msg => ({
-        id: msg.id,
-        texto: msg.text || msg.texto,
-        nombre: msg.nickname || msg.nombre,
-        x: msg.position_x || Math.random() * 80 + 10,
-        y: msg.position_y || Math.random() * 80 + 10,
-        createdAt: created,
-        expirationTime: created + (30 * 1000)
-      }))
+     const mensajesConTimer = (data || []).map(msg => {
+  const created = new Date(msg.created_at).getTime(); // Convertir a timestamp
+  return {
+    id: msg.id,
+    texto: msg.text,
+    nombre: msg.nickname || 'Anónimo',
+    x: msg.position_x || Math.random() * 80 + 10,
+    y: msg.position_y || Math.random() * 80 + 10,
+    createdAt: created,
+    expirationTime: created + 30 * 1000 // 30 segundos de duración
+  }
+})
+
 
       setMensajes(mensajesConTimer)
       console.log('✅ Mensajes cargados correctamente')
@@ -604,7 +592,7 @@ const getTimeLeft = (expirationTime) => {
               maxLength="20"
               disabled={isLoading}
               style={{
-                width: '70%',
+                width: '80%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',

@@ -87,8 +87,8 @@ export default function WallDigital() {
         nombre: msg.nickname || msg.nombre,
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
-        createdAt: new Date(msg.created_at).getTime(),
-        expirationTime: new Date(msg.created_at).getTime() + (30 * 1000)
+        createdAt: created,
+        expirationTime: created + (30 * 1000)
       }))
 
       setMensajes(mensajesConTimer)
@@ -151,8 +151,8 @@ export default function WallDigital() {
         nombre: data[0].nickname,
         x: data[0].position_x,
         y: data[0].position_y,
-        createdAt: new Date(data[0].created_at).getTime(),
-        expirationTime: new Date(data[0].created_at).getTime() + (30 * 1000)
+        createdAt: Date.now(),
+        expirationTime: Date.now() + (30 * 1000)
       }
 
       // Agregar inmediatamente al estado
@@ -559,7 +559,7 @@ const getTimeLeft = (expirationTime) => {
               maxLength="80"
               disabled={isLoading}
               style={{
-                width: '100%',
+                width: '80%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',
@@ -588,7 +588,7 @@ const getTimeLeft = (expirationTime) => {
               maxLength="20"
               disabled={isLoading}
               style={{
-                width: '100%',
+                width: '70%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',

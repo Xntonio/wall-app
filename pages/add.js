@@ -220,18 +220,12 @@ export default function WallDigital() {
   }
 
   const getTimeLeft = (expirationTime) => {
-    const timeLeft = expirationTime - Date.now()
-    if (timeLeft <= 0) return null
-    
-    const seconds = Math.ceil(timeLeft / 1000)
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    
-    if (minutes > 0) {
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-    }
-    return `${remainingSeconds}s`
-  }
+  const timeLeft = expirationTime - Date.now()
+  if (timeLeft <= 0) return null
+  
+  const seconds = Math.ceil(timeLeft / 1000)
+  return `${seconds}s`
+}
 
   // ========================================
   // EFECTOS

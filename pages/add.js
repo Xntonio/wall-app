@@ -58,26 +58,42 @@ export default function WallDigital() {
     }
   }
 
-  const cargarMensajes = async () => {
-    if (!isOnline) return
+ const cargarMensajes = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30)
 
-    try {
-      console.log('📥 Cargando mensajes...')
-      
-      const now = new Date()
-      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
-      
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .gte('created_at', oneMinuteAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(50)
+    if (error) throw error
 
-      if (error) {
-        console.error('❌ Error cargando mensajes:', error)
-        throw error
+    const mensajesConTimer = (data || []).map(msg => {
+      // 👇 Aseguramos que siempre exista un valor de fecha válido
+      const createdAt = msg.created_at
+        ? new Date(msg.created_at).getTime()
+        : Date.now()
+
+      return {
+        id: msg.id,
+        texto: msg.text || msg.texto,
+        nombre: msg.nickname || msg.nombre,
+        x: msg.position_x || Math.random() * 80 + 10,
+        y: msg.position_y || Math.random() * 80 + 10,
+        createdAt, // usamos la constante correcta
+        expirationTime: createdAt + (30 * 1000)
       }
+    })
+
+    setMensajes(mensajesConTimer)
+    setIsOnline(true)
+  } catch (error) {
+    console.error('❌ Error cargando mensajes:', error)
+    showToast('Error cargando mensajes', 'error')
+    // OJO: ya no ponemos setIsOnline(false) aquí para que no "desconecte" la app
+  }
+}
+
 
       console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
 

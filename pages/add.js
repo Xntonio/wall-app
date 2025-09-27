@@ -219,13 +219,14 @@ export default function WallDigital() {
     })
   }
 
-  const getTimeLeft = (expirationTime) => {
-  const timeLeft = expirationTime - Date.now()
-  if (timeLeft <= 0) return null
-  
-  const seconds = Math.ceil(timeLeft)
+const getTimeLeft = (expirationTime) => {
+  const diff = expirationTime - Date.now()
+  if (diff <= 0) return null
+
+  const seconds = Math.ceil(diff / 1000) // convertir ms a segundos
   return `${seconds}s`
 }
+
 
   // ========================================
   // EFECTOS

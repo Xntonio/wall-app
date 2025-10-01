@@ -65,7 +65,8 @@ export default function WallDigital() {
       console.log('📥 Cargando mensajes...')
       
       const now = new Date()
-      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000)) //60000
+      //const oneMinuteAgo = new Date(now.getTime() - (60 * 1000)) //60000
+      const oneMinuteAgo = now.getTime() - (15 * 1000) //60000
       const timeNowTemp = now.getTime()
       console.log('timeNow: ',timeNowTemp)
       console.log('oneMinuteAgo: ',oneMinuteAgo)
@@ -85,7 +86,9 @@ export default function WallDigital() {
       console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
 
      const mensajesConTimer = (data || []).map(msg => {
-  const created = new Date(msg.created_at).getTime(); // Convertir a timestamp
+  //const created = new Date(msg.created_at).getTime(); // Convertir a timestamp
+    const created = new Date(msg.created_at).getTime(); // Convertir a timestamp
+
   return {
     id: msg.id,
     texto: msg.text,
@@ -93,7 +96,7 @@ export default function WallDigital() {
     x: msg.position_x || Math.random() * 80 + 10,
     y: msg.position_y || Math.random() * 80 + 10,
     createdAt: created,
-    expirationTime: created + 30 * 1000 // 30 segundos de duración
+    expirationTime: created + 15 * 1000 // 30 segundos de duración
   }
 })
 
@@ -159,7 +162,7 @@ export default function WallDigital() {
         x: data[0].position_x,
         y: data[0].position_y,
         createdAt: Date.now(),
-        expirationTime: Date.now() + (30 * 1000)
+        expirationTime: Date.now() + (15 * 1000)
       }
 
       // Agregar inmediatamente al estado
@@ -556,25 +559,36 @@ const getTimeLeft = (expirationTime) => {
               marginBottom: '8px',
               fontSize: '15px'
             }}>
-              💬 Mensaje:
+              💬 Tu Mensaje:
             </label>
-            <input
-              type="text"
+            <textarea
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
               placeholder="Escribe aquí tu mensaje..."
-              maxLength="80"
+              maxLength="25"
               disabled={isLoading}
+              rows="3"
               style={{
-                width: '80%',
+                width: '100%',
                 padding: '14px 16px',
                 border: '2px solid #e2e8f0',
                 borderRadius: '10px',
                 fontSize: '16px',
                 background: isLoading ? '#f7fafc' : '#fafafa',
-                opacity: isLoading ? 0.7 : 1
+                opacity: isLoading ? 0.7 : 1,
+                resize: 'vertical',
+                fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                lineHeight: '1.5'
               }}
             />
+            <div style={{
+              fontSize: '12px',
+              color: '#718096',
+              marginTop: '4px',
+              textAlign: 'right'
+            }}>
+              {texto.length}/200 caracteres
+            </div>
           </div>
 
           <div style={{ marginBottom: '20px' }}>

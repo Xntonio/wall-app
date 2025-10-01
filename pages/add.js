@@ -65,7 +65,10 @@ export default function WallDigital() {
       console.log('📥 Cargando mensajes...')
       
       const now = new Date()
-      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000))
+      const oneMinuteAgo = new Date(now.getTime() - (60 * 1000)) //60000
+      const timeNowTemp = now.getTime()
+      console.log('timeNow: ',timeNowTemp)
+      console.log('oneMinuteAgo: ',oneMinuteAgo)
       
       const { data, error } = await supabase
         .from('messages')
@@ -339,7 +342,7 @@ const getTimeLeft = (expirationTime) => {
         boxShadow: '0 2px 20px rgba(0, 0, 0, 0.3)'
       }}>
         <h1 style={{ fontSize: '32px', marginBottom: '8px', fontWeight: '700' }}>
-          🌐 Muro Digital Compartido
+          🌐 Hey!
         </h1>
         <p style={{ opacity: '0.9', fontSize: '16px' }}>
           Mensajes temporales actualizados cada 5 segundos • Duración: 1 minuto
@@ -381,7 +384,7 @@ const getTimeLeft = (expirationTime) => {
             zIndex: 10,
             backdropFilter: 'blur(15px)'
           }}>
-            Muro Colaborativo
+            Deja lo tuyo...
           </div>
           
           <div
@@ -553,7 +556,7 @@ const getTimeLeft = (expirationTime) => {
               marginBottom: '8px',
               fontSize: '15px'
             }}>
-              💬 Tu Mensaje:
+              💬 Mensaje:
             </label>
             <input
               type="text"
@@ -582,13 +585,13 @@ const getTimeLeft = (expirationTime) => {
               marginBottom: '8px',
               fontSize: '15px'
             }}>
-              👤 Tu Nombre:
+              👤 Firma:
             </label>
             <input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="¿Cómo te llamas?"
+              placeholder="Atte: ..."
               maxLength="20"
               disabled={isLoading}
               style={{
@@ -675,8 +678,8 @@ const getTimeLeft = (expirationTime) => {
               color: '#666',
               lineHeight: '1.5'
             }}>
-              <strong>📋 Cómo usar:</strong><br/>
-              • Haz clic donde quieres tu mensaje<br/>
+              <strong>📋 Hey!:</strong><br/>
+              • Selecciona donde ira tu mensaje +<br/>
               • Escribe tu texto y nombre<br/>
               • Presiona el botón para publicar<br/>
               • Los mensajes se actualizan automáticamente

@@ -59,59 +59,50 @@ export default function WallDigital() {
   }
 
   const cargarMensajes = async () => {
-    if (!isOnline) return
+  if (!isOnline) return
 
-    try {
-      console.log('📥 Cargando mensajes...')
-      
-      const now = new Date()
-      //const oneMinuteAgo = new Date(now.getTime() - (60 * 1000)) //60000
-      ////const oneMinuteAgo = now.getTime() - (15 * 1000) //60000
-      const timeNowTemp = now.getTime()
-      console.log('timeNow: ',timeNowTemp)
-      console.log('oneMinuteAgo: ',oneMinuteAgo)
-      const oneMinuteAgo = new Date(Date.now() - 15 * 1000)
+  try {
+    console.log('📥 Cargando mensajes...')
 
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .gte('created_at', oneMinuteAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(50)
+    // ✅ Fecha correcta: hace 15 segundos
+    const oneMinuteAgo = new Date(Date.now() - 15 * 1000)
 
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .gte('created_at', oneMinuteAgo.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(50)
 
-      if (error) {
-        console.error('❌ Error cargando mensajes:', error)
-        throw error
-      }
-
-      console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
-
-     const mensajesConTimer = (data || []).map(msg => {
-  //const created = new Date(msg.created_at).getTime(); // Convertir a timestamp
-    const created = new Date(msg.created_at).getTime(); // Convertir a timestamp
-
-  return {
-    id: msg.id,
-    texto: msg.text,
-    nombre: msg.nickname || 'Anónimo',
-    x: msg.position_x || Math.random() * 80 + 10,
-    y: msg.position_y || Math.random() * 80 + 10,
-    createdAt: created,
-    expirationTime: created + 15 * 1000 // 30 segundos de duración
-  }
-})
-
-
-      setMensajes(mensajesConTimer)
-      console.log('✅ Mensajes cargados correctamente')
-
-    } catch (error) {
+    if (error) {
       console.error('❌ Error cargando mensajes:', error)
-      setIsOnline(false)
-      showToast('Error conectando a la base de datos', 'error')
+      throw error
     }
+
+    console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
+
+    const mensajesConTimer = (data || []).map(msg => {
+      const created = new Date(msg.created_at).getTime() // ✅ conversión correcta a timestamp
+      return {
+        id: msg.id,
+        texto: msg.text,
+        nombre: msg.nickname || 'Anónimo',
+        x: msg.position_x || Math.random() * 80 + 10,
+        y: msg.position_y || Math.random() * 80 + 10,
+        createdAt: created,
+        expirationTime: created + 15 * 1000 // 15 segundos de duración
+      }
+    })
+
+    setMensajes(mensajesConTimer)
+    console.log('✅ Mensajes cargados correctamente')
+  } catch (error) {
+    console.error('❌ Error cargando mensajes:', error)
+    setIsOnline(false)
+    showToast('Error conectando a la base de datos', 'error')
   }
+}      
+     
 
   const agregarMensaje = async () => {
     if (isLoading) return

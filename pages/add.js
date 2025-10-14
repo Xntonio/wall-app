@@ -66,17 +66,19 @@ export default function WallDigital() {
       
       const now = new Date()
       //const oneMinuteAgo = new Date(now.getTime() - (60 * 1000)) //60000
-      const oneMinuteAgo = now.getTime() - (15 * 1000) //60000
+      ////const oneMinuteAgo = now.getTime() - (15 * 1000) //60000
       const timeNowTemp = now.getTime()
       console.log('timeNow: ',timeNowTemp)
       console.log('oneMinuteAgo: ',oneMinuteAgo)
-      
+      const oneMinuteAgo = new Date(Date.now() - 15 * 1000)
+
       const { data, error } = await supabase
         .from('messages')
         .select('*')
         .gte('created_at', oneMinuteAgo.toISOString())
         .order('created_at', { ascending: false })
         .limit(50)
+
 
       if (error) {
         console.error('❌ Error cargando mensajes:', error)

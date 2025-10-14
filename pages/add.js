@@ -696,7 +696,7 @@ const getTimeLeft = (expirationTime) => {
               • Selecciona donde ira tu mensaje +<br/>
               • Escribe tu texto y nombre<br/>
               • Presiona el botón para publicar<br/>
-              • Los mensajes se actualizan automáticamente
+              • Los mensajes se actualizan automáticamente.
             </div>
           </div>
         </div>

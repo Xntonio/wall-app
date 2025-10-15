@@ -148,15 +148,32 @@ export default function WallDigital() {
       console.log('✅ Mensaje insertado exitosamente')
 
       // Crear elemento visual inmediatamente (sin esperar recarga)
-      const nuevoMensaje = {
-        id: data[0].id,
-        texto: data[0].text,
-        nombre: data[0].nickname,
-        x: data[0].position_x,
-        y: data[0].position_y,
-        createdAt: Date.now(),
-        expirationTime: Date.now() + (15 * 1000)
+      // const nuevoMensaje = {
+      //   id: data[0].id,
+      //   texto: data[0].text,
+      //   nombre: data[0].nickname,
+      //   x: data[0].position_x,
+      //   y: data[0].position_y,
+      //   createdAt: Date.now(),
+      //   expirationTime: Date.now() + (15 * 1000)
       }
+
+
+      //  const mensajesConTimer = (data || []).map(msg => {
+      // const created = new Date(msg.created_at).getTime() // ✅ conversión correcta a timestamp
+      // return {
+      //   id: msg.id,
+      //   texto: msg.text,
+      //   nombre: msg.nickname || 'Anónimo',
+      //   x: msg.position_x || Math.random() * 80 + 10,
+      //   y: msg.position_y || Math.random() * 80 + 10,
+      //   createdAt: created,
+      //   expirationTime: created + 15 * 1000 // 15 segundos de duración
+      // }
+
+
+
+
 
       // Agregar inmediatamente al estado
       setMensajes(prev => [nuevoMensaje, ...prev])

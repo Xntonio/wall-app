@@ -64,13 +64,13 @@ const cargarMensajes = async () => {
   try {
     console.log('📥 Cargando mensajes...')
 
-    // Cargar mensajes de los últimos 15 segundos
-    const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000)
+    // Cargar mensajes de los últimos 60 segundos (más margen)
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000)
 
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .gte('created_at', fifteenSecondsAgo.toISOString())
+      .gte('created_at', sixtySecondsAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -83,14 +83,27 @@ const cargarMensajes = async () => {
 
     const now = Date.now()
     const mensajesConTimer = (data || []).map(msg => {
-      const createdTimestamp = new Date(msg.created_at).getTime()
-      const expirationTimestamp = createdTimestamp + (15 * 1000) // 15 segundos desde creación
+      // Convertir el timestamp de la BD a milisegundos
+      const createdDate = new Date(msg.created_at)
+      const createdTimestamp = createdDate.getTime()
       
+      // Calcular cuánto tiempo ha pasado desde la creación
+      const timeSinceCreation = now - createdTimestamp
+      
+      // El mensaje expira 15 segundos después de su creación
+      const expirationTimestamp = createdTimestamp + (15 * 1000)
+      
+      console.log('─────────────────────────')
       console.log('Mensaje ID:', msg.id)
+      console.log('created_at (BD):', msg.created_at)
+      console.log('Created Date:', createdDate.toString())
       console.log('Created timestamp:', createdTimestamp)
-      console.log('Now:', now)
+      console.log('Now timestamp:', now)
+      console.log('Tiempo desde creación (ms):', timeSinceCreation)
+      console.log('Tiempo desde creación (s):', Math.floor(timeSinceCreation / 1000))
       console.log('Expiration timestamp:', expirationTimestamp)
-      console.log('Time remaining (ms):', expirationTimestamp - now)
+      console.log('Tiempo hasta expirar (ms):', expirationTimestamp - now)
+      console.log('Tiempo hasta expirar (s):', Math.floor((expirationTimestamp - now) / 1000))
 
       return {
         id: msg.id,
@@ -103,13 +116,16 @@ const cargarMensajes = async () => {
       }
     })
 
-    setMensajes(mensajesConTimer)
-    console.log('✅ Mensajes cargados correctamente')
+    // Filtrar solo mensajes que aún no han expirado
+    const mensajesActivos = mensajesConTimer.filter(msg => msg.expirationTime > now)
+    
+    console.log('✅ Mensajes activos:', mensajesActivos.length)
+    setMensajes(mensajesActivos)
   } catch (error) {
     console.error('❌ Error cargando mensajes:', error)
     showToast('Error conectando a la base de datos', 'error')
   }
-} 
+}
      
 
   const agregarMensaje = async () => {

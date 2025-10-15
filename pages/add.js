@@ -182,11 +182,11 @@ export default function WallDigital() {
       setTexto('')
       setNombre('')
       setClickPosition(null)
-      
+
       showToast('¡Mensaje publicado correctamente!', 'success')
 
       // Recargar después de 2 segundos para sincronizar con otros usuarios
-      setTimeout(cargarMensajes, 2000)
+      setTimeout(cargarMensajes, 100)
 
     } catch (error) {
       console.error('❌ Error enviando mensaje:', error)

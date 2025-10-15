@@ -242,9 +242,12 @@ export default function WallDigital() {
 
 const getTimeLeft = (expirationTime) => {
   const timeLeft = expirationTime - Date.now()
+    console.log('Exp time: ' + expirationTime)
+    console.log('Exp time2: ' + timeLeft)
   if (timeLeft <= 0) return null
 
   const seconds = Math.ceil(timeLeft / 1000)
+  console.log('Exp time3: ' + seconds)
   return `${seconds}s`
 }
 

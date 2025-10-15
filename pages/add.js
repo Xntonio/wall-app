@@ -83,6 +83,8 @@ export default function WallDigital() {
 
     const mensajesConTimer = (data || []).map(msg => {
       const created = new Date(msg.created_at).getTime() // ✅ conversión correcta a timestamp
+      const now = Date.now()
+
     console.log('Created:' + created )
 
       return {
@@ -92,7 +94,7 @@ export default function WallDigital() {
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: created,
-        expirationTime: Math.floor(  (now - (created + 15 * 1000))/1000    ) // 15 segundos de duración
+        expirationTime: Math.floor(  (now - (created + 15 * 1000))/1000 ) // 15 segundos de duración
       }
     })
 

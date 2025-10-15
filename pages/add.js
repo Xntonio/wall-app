@@ -94,7 +94,7 @@ export default function WallDigital() {
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: created,
-        expirationTime: Math.floor(  (now - (created + 15 * 1000))/1000 ) // 15 segundos de duración
+        expirationTime:created + 15 * 1000 // 15 segundos de duración
       }
     })
 

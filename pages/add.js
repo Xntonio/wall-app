@@ -83,6 +83,8 @@ export default function WallDigital() {
 
     const mensajesConTimer = (data || []).map(msg => {
       const created = new Date(msg.created_at).getTime() // ✅ conversión correcta a timestamp
+    console.log('Created:' + created )
+
       return {
         id: msg.id,
         texto: msg.text,
@@ -90,9 +92,21 @@ export default function WallDigital() {
         x: msg.position_x || Math.random() * 80 + 10,
         y: msg.position_y || Math.random() * 80 + 10,
         createdAt: created,
-        expirationTime: created + 15 * 1000 // 15 segundos de duración
+        expirationTime: Math.floor((now - (created + 15 * 1000)/1000) // 15 segundos de duración
       }
     })
+
+      /////////////////
+     const nuevoMensaje = {
+        id: data[0].id,
+        texto: data[0].text,
+        nombre: data[0].nickname,
+        x: data[0].position_x,
+        y: data[0].position_y,
+        createdAt: Date.now(),
+        expirationTime: Date.now() + (15 * 1000)
+      }
+      /////////////////
 
     setMensajes(mensajesConTimer)
     console.log('✅ Mensajes cargados correctamente')
@@ -157,23 +171,6 @@ export default function WallDigital() {
         createdAt: Date.now(),
         expirationTime: Date.now() + (15 * 1000)
       }
-
-
-      //  const mensajesConTimer = (data || []).map(msg => {
-      // const created = new Date(msg.created_at).getTime() // ✅ conversión correcta a timestamp
-      // return {
-      //   id: msg.id,
-      //   texto: msg.text,
-      //   nombre: msg.nickname || 'Anónimo',
-      //   x: msg.position_x || Math.random() * 80 + 10,
-      //   y: msg.position_y || Math.random() * 80 + 10,
-      //   createdAt: created,
-      //   expirationTime: created + 15 * 1000 // 15 segundos de duración
-      // }
-
-
-
-
 
       // Agregar inmediatamente al estado
       //setMensajes(prev => [nuevoMensaje, ...prev])

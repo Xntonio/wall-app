@@ -156,7 +156,7 @@ export default function WallDigital() {
       //   y: data[0].position_y,
       //   createdAt: Date.now(),
       //   expirationTime: Date.now() + (15 * 1000)
-      }
+      //}
 
 
       //  const mensajesConTimer = (data || []).map(msg => {

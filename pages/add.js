@@ -58,13 +58,14 @@ export default function WallDigital() {
     }
   }
 
+
 const cargarMensajes = async () => {
   if (!isOnline) return
 
   try {
     console.log('📥 Cargando mensajes...')
 
-    // Cargar mensajes de los últimos 60 segundos (más margen)
+    // Cargar mensajes de los últimos 60 segundos
     const sixtySecondsAgo = new Date(Date.now() - 60 * 1000)
 
     const { data, error } = await supabase
@@ -82,51 +83,51 @@ const cargarMensajes = async () => {
     console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
 
     const now = Date.now()
-    const mensajesConTimer = (data || []).map(msg => {
-      // Convertir el timestamp de la BD a milisegundos
-      const createdDate = new Date(msg.created_at)
-      const createdTimestamp = createdDate.getTime()
-      
-      // Calcular cuánto tiempo ha pasado desde la creación
-      const timeSinceCreation = now - createdTimestamp
-      
-      // El mensaje expira 15 segundos después de su creación
-      const expirationTimestamp = createdTimestamp + (15 * 1000)
-      
-      console.log('─────────────────────────')
-      console.log('Mensaje ID:', msg.id)
-      console.log('created_at (BD):', msg.created_at)
-      console.log('Created Date:', createdDate.toString())
-      console.log('Created timestamp:', createdTimestamp)
-      console.log('Now timestamp:', now)
-      console.log('Tiempo desde creación (ms):', timeSinceCreation)
-      console.log('Tiempo desde creación (s):', Math.floor(timeSinceCreation / 1000))
-      console.log('Expiration timestamp:', expirationTimestamp)
-      console.log('Tiempo hasta expirar (ms):', expirationTimestamp - now)
-      console.log('Tiempo hasta expirar (s):', Math.floor((expirationTimestamp - now) / 1000))
-
-      return {
-        id: msg.id,
-        texto: msg.text,
-        nombre: msg.nickname || 'Anónimo',
-        x: msg.position_x || Math.random() * 80 + 10,
-        y: msg.position_y || Math.random() * 80 + 10,
-        createdAt: createdTimestamp,
-        expirationTime: expirationTimestamp
-      }
-    })
-
-    // Filtrar solo mensajes que aún no han expirado
-    const mensajesActivos = mensajesConTimer.filter(msg => msg.expirationTime > now)
     
-    console.log('✅ Mensajes activos:', mensajesActivos.length)
-    setMensajes(mensajesActivos)
+    // Guardar referencia de cuándo se cargó cada mensaje
+    setMensajes(prev => {
+      const mensajesConTimer = (data || []).map(msg => {
+        // Buscar si el mensaje ya existe en el estado
+        const existente = prev.find(m => m.id === msg.id)
+        
+        if (existente) {
+          // Si ya existe, mantener sus timestamps originales
+          console.log('Mensaje existente ID:', msg.id, '- Tiempo restante:', Math.ceil((existente.expirationTime - now) / 1000) + 's')
+          return existente
+        } else {
+          // Si es nuevo, usar el timestamp ACTUAL como momento de creación
+          const createdTimestamp = now
+          const expirationTimestamp = now + (15 * 1000) // Expira en 15 segundos
+          
+          console.log('─────────────────────────')
+          console.log('✨ NUEVO Mensaje ID:', msg.id)
+          console.log('Created (ahora):', createdTimestamp)
+          console.log('Expira en:', expirationTimestamp)
+          console.log('Segundos de vida: 15s')
+
+          return {
+            id: msg.id,
+            texto: msg.text,
+            nombre: msg.nickname || 'Anónimo',
+            x: msg.position_x || Math.random() * 80 + 10,
+            y: msg.position_y || Math.random() * 80 + 10,
+            createdAt: createdTimestamp,
+            expirationTime: expirationTimestamp
+          }
+        }
+      })
+
+      // Filtrar solo mensajes que aún no han expirado
+      const mensajesActivos = mensajesConTimer.filter(msg => msg.expirationTime > now)
+      
+      console.log('✅ Total mensajes activos:', mensajesActivos.length)
+      return mensajesActivos
+    })
   } catch (error) {
     console.error('❌ Error cargando mensajes:', error)
     showToast('Error conectando a la base de datos', 'error')
   }
-}
-     
+}     
 
   const agregarMensaje = async () => {
     if (isLoading) return

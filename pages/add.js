@@ -86,6 +86,8 @@ export default function WallDigital() {
       const now = Date.now()
 
     console.log('Created:' + created )
+    console.log('Created2:' + created + 15 * 1000)
+
 
       return {
         id: msg.id,
@@ -99,16 +101,16 @@ export default function WallDigital() {
     })
 
       /////////////////
-     const nuevoMensaje = {
-        id: data[0].id,
-        texto: data[0].text,
-        nombre: data[0].nickname,
-        x: data[0].position_x,
-        y: data[0].position_y,
-        createdAt: Date.now(),
-        expirationTime: Date.now() + (15 * 1000)
-      }
-      /////////////////
+    //  const nuevoMensaje = {
+    //     id: data[0].id,
+    //     texto: data[0].text,
+    //     nombre: data[0].nickname,
+    //     x: data[0].position_x,
+    //     y: data[0].position_y,
+    //     createdAt: Date.now(),
+    //     expirationTime: Date.now() + (15 * 1000)
+    //   }
+    //   /////////////////
 
     setMensajes(mensajesConTimer)
     console.log('✅ Mensajes cargados correctamente')
@@ -279,6 +281,8 @@ const getTimeLeft = (expirationTime) => {
     const cleanupInterval = setInterval(() => {
       if (mounted) {
         limpiarMensajesExpirados()
+        console.log('Limpiar mensajes...')
+
       }
     }, 1000)
 

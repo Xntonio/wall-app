@@ -114,7 +114,7 @@ export default function WallDigital() {
     console.log('✅ Mensajes cargados correctamente')
   } catch (error) {
     console.error('❌ Error cargando mensajes:', error)
-    setIsOnline(false)
+    //setIsOnline(false)
     showToast('Error conectando a la base de datos', 'error')
   }
 }      

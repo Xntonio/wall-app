@@ -246,7 +246,7 @@ const getTimeLeft = (expirationTime) => {
     console.log('Exp time2: ' + timeLeft)
   if (timeLeft <= 0) return null
 
-  const seconds = Math.ceil(timeLeft / 10000000)
+  const seconds = Math.ceil(timeLeft / 100000)
   console.log('Exp time3: ' + seconds)
   return `${seconds}s`
 }

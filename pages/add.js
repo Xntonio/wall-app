@@ -15,6 +15,8 @@ export default function WallDigital() {
   // Referencias
   const wallContainerRef = useRef(null)
   const refreshIntervalRef = useRef(null)
+  const mensajesCargadosRef = useRef(new Set()) // Rastrear IDs de mensajes ya cargados
+  const mensajesCargadosRef = useRef(new Set()) // Rastrear IDs de mensajes ya cargados
 
   // ========================================
   // FUNCIONES DE NOTIFICACIONES
@@ -58,31 +60,30 @@ export default function WallDigital() {
     }
   }
 
+  const cargarMensajes = async () => {
+    if (!isOnline) return
 
-const cargarMensajes = async () => {
-  if (!isOnline) return
+    try {
+      console.log('📥 Cargando mensajes...')
 
-  try {
-    console.log('📥 Cargando mensajes...')
+      // Cargar mensajes de los últimos 20 segundos (un poco más de margen)
+      const twentySecondsAgo = new Date(Date.now() - 20 * 1000)
 
-    // Cargar mensajes de los últimos 20 segundos (un poco más de margen)
-    const twentySecondsAgo = new Date(Date.now() - 20 * 1000)
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .gte('created_at', twentySecondsAgo.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(50)
 
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .gte('created_at', twentySecondsAgo.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(50)
+      if (error) {
+        console.error('❌ Error cargando mensajes:', error)
+        throw error
+      }
 
-    if (error) {
-      console.error('❌ Error cargando mensajes:', error)
-      throw error
-    }
+      console.log(`📊 Mensajes obtenidos de BD: ${data?.length || 0}`)
 
-    console.log(`📊 Mensajes obtenidos de BD: ${data?.length || 0}`)
-
-    const now = Date.now()
+      const now = Date.now()
     
     setMensajes(prev => {
       const mensajesConTimer = (data || []).map(msg => {

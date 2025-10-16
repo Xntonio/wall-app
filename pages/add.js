@@ -65,13 +65,13 @@ const cargarMensajes = async () => {
   try {
     console.log('📥 Cargando mensajes...')
 
-    // Cargar mensajes de los últimos 60 segundos
-    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000)
+    // Cargar mensajes de los últimos 20 segundos (un poco más de margen)
+    const twentySecondsAgo = new Date(Date.now() - 20 * 1000)
 
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .gte('created_at', sixtySecondsAgo.toISOString())
+      .gte('created_at', twentySecondsAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -80,11 +80,10 @@ const cargarMensajes = async () => {
       throw error
     }
 
-    console.log(`📊 Mensajes obtenidos: ${data?.length || 0}`)
+    console.log(`📊 Mensajes obtenidos de BD: ${data?.length || 0}`)
 
     const now = Date.now()
     
-    // Guardar referencia de cuándo se cargó cada mensaje
     setMensajes(prev => {
       const mensajesConTimer = (data || []).map(msg => {
         // Buscar si el mensaje ya existe en el estado
@@ -92,12 +91,22 @@ const cargarMensajes = async () => {
         
         if (existente) {
           // Si ya existe, mantener sus timestamps originales
-          console.log('Mensaje existente ID:', msg.id, '- Tiempo restante:', Math.ceil((existente.expirationTime - now) / 1000) + 's')
+          const tiempoRestante = Math.ceil((existente.expirationTime - now) / 1000)
+          console.log('✓ Mensaje existente ID:', msg.id, '- Tiempo restante:', tiempoRestante + 's')
           return existente
         } else {
+          // Verificar si este mensaje ya fue cargado anteriormente (y expiró)
+          if (mensajesCargadosRef.current.has(msg.id)) {
+            console.log('⏭️ Mensaje ya expirado, ignorando ID:', msg.id)
+            return null // No cargar mensajes que ya expiraron
+          }
+          
           // Si es nuevo, usar el timestamp ACTUAL como momento de creación
           const createdTimestamp = now
           const expirationTimestamp = now + (15 * 1000) // Expira en 15 segundos
+          
+          // Registrar este mensaje como cargado
+          mensajesCargadosRef.current.add(msg.id)
           
           console.log('─────────────────────────')
           console.log('✨ NUEVO Mensaje ID:', msg.id)
@@ -115,7 +124,7 @@ const cargarMensajes = async () => {
             expirationTime: expirationTimestamp
           }
         }
-      })
+      }).filter(msg => msg !== null) // Filtrar mensajes nulos (ya expirados)
 
       // Filtrar solo mensajes que aún no han expirado
       const mensajesActivos = mensajesConTimer.filter(msg => msg.expirationTime > now)
@@ -127,7 +136,7 @@ const cargarMensajes = async () => {
     console.error('❌ Error cargando mensajes:', error)
     showToast('Error conectando a la base de datos', 'error')
   }
-}     
+}  
 
   const agregarMensaje = async () => {
     if (isLoading) return

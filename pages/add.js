@@ -16,7 +16,6 @@ export default function WallDigital() {
   const wallContainerRef = useRef(null)
   const refreshIntervalRef = useRef(null)
   const mensajesCargadosRef = useRef(new Set()) // Rastrear IDs de mensajes ya cargados
-  const mensajesCargadosRef = useRef(new Set()) // Rastrear IDs de mensajes ya cargados
 
   // ========================================
   // FUNCIONES DE NOTIFICACIONES

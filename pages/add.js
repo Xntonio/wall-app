@@ -299,7 +299,7 @@ const getTimeLeft = (expirationTime) => {
     // Limpiar mensajes expirados cada segundo
     const cleanupInterval = setInterval(() => {
       if (mounted) {
-        limpiarMensajesExpirados()
+        /////limpiarMensajesExpirados()
         console.log('Limpiar mensajes...')
 
       }

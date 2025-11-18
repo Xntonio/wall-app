@@ -85,7 +85,6 @@ export default function WallDigital() {
 
       const now = Date.now()
     
-    cargarMensajes()
 
     setMensajes(prev => {
       const mensajesConTimer = (data || []).map(msg => {
@@ -321,6 +320,9 @@ const getTimeLeft = (expirationTime) => {
   // ========================================
   // RENDER
   // ========================================
+
+
+  cargarMensajes()
 
   const getButtonText = () => {
     if (!isOnline) return '❌ Sin conexión'

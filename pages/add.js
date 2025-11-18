@@ -326,7 +326,6 @@ useEffect(() => {
   }
 }, []) // Mantener dependencias vacías para ejecutar solo al montar
 
-
   // ========================================
   // RENDER
   // ========================================
@@ -395,6 +394,7 @@ useEffect(() => {
         Mensajes temporales actualizados cada 5 segundos • Duración: 15 segundos
       </p>
 
+</div> 
       {/* Container */}
       <div style={{
         display: 'flex',

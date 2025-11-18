@@ -75,6 +75,8 @@ export default function WallDigital() {
         .order('created_at', { ascending: false })
         .limit(50)
 
+        cargarMensajes()
+
       if (error) {
         console.error('❌ Error cargando mensajes:', error)
         throw error

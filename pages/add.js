@@ -274,48 +274,58 @@ const getTimeLeft = (expirationTime) => {
   // EFECTOS
   // ========================================
 
-  useEffect(() => {
-    let mounted = true
+  // ========================================
+// EFECTOS
+// ========================================
+
+useEffect(() => {
+  let mounted = true
+  
+  const init = async () => {
+    console.log('🚀 Inicializando WallDigital...')
     
-    const init = async () => {
-      console.log('🚀 Inicializando WallDigital (sin Realtime)...')
+    const connected = await checkConnection()
+    
+    if (connected && mounted) {
+      console.log('✅ Conectado, cargando mensajes iniciales...')
       
-      const connected = await checkConnection()
-      
-      if (connected && mounted) {
-        console.log('✅ Conectado, cargando mensajes...')
-        await cargarMensajes()
-        
-        // Auto-refresh cada 5 segundos para simular tiempo real
-        console.log('⏱️ Configurando auto-refresh cada 5 segundos...')
-        refreshIntervalRef.current = setInterval(() => {
-          if (mounted) {
-            cargarMensajes()
-          }
-        }, 5000)
-      }
+      // IMPORTANTE: Esperar un momento para asegurar que el estado se actualizó
+      setTimeout(async () => {
+        if (mounted) {
+          await cargarMensajes()
+          
+          // Auto-refresh cada 5 segundos
+          console.log('⏱️ Configurando auto-refresh cada 5 segundos...')
+          refreshIntervalRef.current = setInterval(() => {
+            if (mounted) {
+              console.log('🔄 Auto-refresh ejecutándose...')
+              cargarMensajes()
+            }
+          }, 5000)
+        }
+      }, 100)
     }
+  }
 
-    init()
+  init()
 
-    // Limpiar mensajes expirados cada segundo
-    const cleanupInterval = setInterval(() => {
-      if (mounted) {
-        /////limpiarMensajesExpirados()
-        console.log('Limpiar mensajes...')
-
-      }
-    }, 1000)
-
-    return () => {
-      console.log('🛑 Desmontando componente...')
-      mounted = false
-      clearInterval(cleanupInterval)
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
+  // Limpiar mensajes expirados cada segundo
+  const cleanupInterval = setInterval(() => {
+    if (mounted) {
+      limpiarMensajesExpirados()
     }
-  }, [])
+  }, 1000)
+
+  return () => {
+    console.log('🛑 Desmontando componente...')
+    mounted = false
+    clearInterval(cleanupInterval)
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current)
+    }
+  }
+}, []) // Mantener dependencias vacías para ejecutar solo al montar
+
 
   // ========================================
   // RENDER

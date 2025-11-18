@@ -75,7 +75,6 @@ export default function WallDigital() {
         .order('created_at', { ascending: false })
         .limit(50)
 
-        cargarMensajes()
 
       if (error) {
         console.error('❌ Error cargando mensajes:', error)
@@ -86,6 +85,8 @@ export default function WallDigital() {
 
       const now = Date.now()
     
+    cargarMensajes()
+
     setMensajes(prev => {
       const mensajesConTimer = (data || []).map(msg => {
         // Buscar si el mensaje ya existe en el estado

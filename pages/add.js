@@ -59,33 +59,31 @@ export default function WallDigital() {
     }
   }
 
-  const cargarMensajes = async () => {
-    if (!isOnline) return
+const cargarMensajes = async () => {
+  if (!isOnline) return
 
-    try {
-      console.log('📥 Cargando mensajes...')
+  try {
+    console.log('📥 Cargando mensajes...')
 
-      // Cargar mensajes de los últimos 20 segundos (un poco más de margen)
-      const twentySecondsAgo = new Date(Date.now() - 20 * 1000)
+    // Cargar mensajes de los últimos 15 segundos (el tiempo de vida configurado)
+    const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000)
 
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .gte('created_at', twentySecondsAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(50)
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .gte('created_at', fifteenSecondsAgo.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(50)
 
+    if (error) {
+      console.error('❌ Error cargando mensajes:', error)
+      throw error
+    }
 
-      if (error) {
-        console.error('❌ Error cargando mensajes:', error)
-        throw error
-      }
+    console.log(`📊 Mensajes obtenidos de BD: ${data?.length || 0}`)
 
-      console.log(`📊 Mensajes obtenidos de BD: ${data?.length || 0}`)
-
-      const now = Date.now()
+    const now = Date.now()
     
-
     setMensajes(prev => {
       const mensajesConTimer = (data || []).map(msg => {
         // Buscar si el mensaje ya existe en el estado
@@ -93,28 +91,30 @@ export default function WallDigital() {
         
         if (existente) {
           // Si ya existe, mantener sus timestamps originales
-          const tiempoRestante = Math.ceil((existente.expirationTime - now) / 1000)
-          console.log('✓ Mensaje existente ID:', msg.id, '- Tiempo restante:', tiempoRestante + 's')
           return existente
         } else {
-          // Verificar si este mensaje ya fue cargado anteriormente (y expiró)
-          if (mensajesCargadosRef.current.has(msg.id)) {
+          // Si es nuevo, calcular cuánto tiempo ha pasado desde su creación
+          const createdAt = new Date(msg.created_at).getTime()
+          const tiempoTranscurrido = now - createdAt
+          const tiempoRestante = (15 * 1000) - tiempoTranscurrido // 15 segundos menos lo transcurrido
+          
+          // Solo cargar si aún tiene tiempo restante
+          if (tiempoRestante <= 0) {
             console.log('⏭️ Mensaje ya expirado, ignorando ID:', msg.id)
-            return null // No cargar mensajes que ya expiraron
+            return null
           }
           
-          // Si es nuevo, usar el timestamp ACTUAL como momento de creación
-          const createdTimestamp = now
-          const expirationTimestamp = now + (15 * 1000) // Expira en 15 segundos
+          const expirationTimestamp = now + tiempoRestante
           
           // Registrar este mensaje como cargado
           mensajesCargadosRef.current.add(msg.id)
           
           console.log('─────────────────────────')
-          console.log('✨ NUEVO Mensaje ID:', msg.id)
-          console.log('Created (ahora):', createdTimestamp)
+          console.log('✨ Cargando mensaje ID:', msg.id)
+          console.log('Creado en BD:', createdAt)
+          console.log('Tiempo transcurrido:', Math.floor(tiempoTranscurrido / 1000) + 's')
+          console.log('Tiempo restante:', Math.ceil(tiempoRestante / 1000) + 's')
           console.log('Expira en:', expirationTimestamp)
-          console.log('Segundos de vida: 15s')
 
           return {
             id: msg.id,
@@ -122,7 +122,7 @@ export default function WallDigital() {
             nombre: msg.nickname || 'Anónimo',
             x: msg.position_x || Math.random() * 80 + 10,
             y: msg.position_y || Math.random() * 80 + 10,
-            createdAt: createdTimestamp,
+            createdAt: createdAt,
             expirationTime: expirationTimestamp
           }
         }
@@ -131,7 +131,7 @@ export default function WallDigital() {
       // Filtrar solo mensajes que aún no han expirado
       const mensajesActivos = mensajesConTimer.filter(msg => msg.expirationTime > now)
       
-      console.log('✅ Total mensajes activos:', mensajesActivos.length)
+      console.log('✅ Total mensajes activos cargados:', mensajesActivos.length)
       return mensajesActivos
     })
   } catch (error) {
@@ -321,9 +321,6 @@ const getTimeLeft = (expirationTime) => {
   // RENDER
   // ========================================
 
-
-  cargarMensajes()
-
   const getButtonText = () => {
     if (!isOnline) return '❌ Sin conexión'
     if (isLoading) return '⏳ Publicando...'
@@ -384,10 +381,9 @@ const getTimeLeft = (expirationTime) => {
         <h1 style={{ fontSize: '32px', marginBottom: '8px', fontWeight: '700' }}>
           🌐 Hey!
         </h1>
-        <p style={{ opacity: '0.9', fontSize: '16px' }}>
-          Mensajes temporales actualizados cada 5 segundos • Duración: 1 minuto
-        </p>
-      </div>
+       <p style={{ opacity: '0.9', fontSize: '16px' }}>
+        Mensajes temporales actualizados cada 5 segundos • Duración: 15 segundos
+      </p>
 
       {/* Container */}
       <div style={{

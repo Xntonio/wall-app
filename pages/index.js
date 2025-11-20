@@ -59,8 +59,8 @@ export default function WallDigital() {
     }
   }
 
-const cargarMensajes = async () => {
-  if (!isOnline) return
+const cargarMensajes = async (forceLoad = false) => {
+  if (!isOnline && !forceLoad) return
 
   try {
     console.log('📥 Cargando mensajes...')
@@ -286,26 +286,21 @@ useEffect(() => {
     
     const connected = await checkConnection()
     
-    if (connected && mounted) {
+if (connected && mounted) {
       console.log('✅ Conectado, cargando mensajes iniciales...')
       
-      // IMPORTANTE: Esperar un momento para asegurar que el estado se actualizó
-      setTimeout(async () => {
+      // Cargar mensajes inmediatamente con forceLoad
+      await cargarMensajes(true)
+      
+      // Auto-refresh cada 5 segundos
+      console.log('⏱️ Configurando auto-refresh cada 5 segundos...')
+      refreshIntervalRef.current = setInterval(() => {
         if (mounted) {
-          await cargarMensajes()
-          
-          // Auto-refresh cada 5 segundos
-          console.log('⏱️ Configurando auto-refresh cada 5 segundos...')
-          refreshIntervalRef.current = setInterval(() => {
-            if (mounted) {
-              console.log('🔄 Auto-refresh ejecutándose...')
-              cargarMensajes()
-            }
-          }, 5000)
+          console.log('🔄 Auto-refresh ejecutándose...')
+          cargarMensajes()
         }
-      }, 100)
+      }, 5000)
     }
-  }
 
   init()
 

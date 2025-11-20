@@ -299,10 +299,10 @@ if (connected && mounted) {
           console.log('🔄 Auto-refresh ejecutándose...')
           cargarMensajes()
         }
-      }, 5000)
+      }, 500)
     }
   }
-  
+
   init()
 
   // Limpiar mensajes expirados cada segundo

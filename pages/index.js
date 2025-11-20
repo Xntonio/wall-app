@@ -301,7 +301,8 @@ if (connected && mounted) {
         }
       }, 5000)
     }
-
+  }
+  
   init()
 
   // Limpiar mensajes expirados cada segundo

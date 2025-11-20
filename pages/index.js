@@ -59,19 +59,17 @@ export default function WallDigital() {
     }
   }
 
-const cargarMensajes = async (forceLoad = false) => {
-  if (!isOnline && !forceLoad) return
-
+const cargarMensajes = async () => {
   try {
     console.log('📥 Cargando mensajes...')
 
-    // Cargar mensajes de los últimos 15 segundos (el tiempo de vida configurado)
-    const fifteenSecondsAgo = new Date(Date.now() - 15 * 1000)
+    // Cargar mensajes de los últimos 30 segundos (el tiempo de vida configurado)
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000)
 
     const { data, error } = await supabase
       .from('messages')
       .select('*')
-      .gte('created_at', fifteenSecondsAgo.toISOString())
+      .gte('created_at', thirtySecondsAgo.toISOString())
       .order('created_at', { ascending: false })
       .limit(50)
 
@@ -96,7 +94,7 @@ const cargarMensajes = async (forceLoad = false) => {
           // Si es nuevo, calcular cuánto tiempo ha pasado desde su creación
           const createdAt = new Date(msg.created_at).getTime()
           const tiempoTranscurrido = now - createdAt
-          const tiempoRestante = (15 * 1000) - tiempoTranscurrido // 15 segundos menos lo transcurrido
+          const tiempoRestante = (30 * 1000) - tiempoTranscurrido // 30 segundos menos lo transcurrido
           
           // Solo cargar si aún tiene tiempo restante
           if (tiempoRestante <= 0) {
@@ -191,7 +189,7 @@ const cargarMensajes = async (forceLoad = false) => {
         x: data[0].position_x,
         y: data[0].position_y,
         createdAt: Date.now(),
-        expirationTime: Date.now() + (15 * 1000)
+        expirationTime: Date.now() + (30 * 1000)
       }
 
       // Agregar inmediatamente al estado
@@ -286,11 +284,11 @@ useEffect(() => {
     
     const connected = await checkConnection()
     
-if (connected && mounted) {
+    if (connected && mounted) {
       console.log('✅ Conectado, cargando mensajes iniciales...')
       
-      // Cargar mensajes inmediatamente con forceLoad
-      await cargarMensajes(true)
+      // Cargar mensajes inmediatamente
+      await cargarMensajes()
       
       // Auto-refresh cada 5 segundos
       console.log('⏱️ Configurando auto-refresh cada 5 segundos...')
@@ -299,7 +297,7 @@ if (connected && mounted) {
           console.log('🔄 Auto-refresh ejecutándose...')
           cargarMensajes()
         }
-      }, 500)
+      }, 5000)
     }
   }
 
@@ -387,7 +385,7 @@ if (connected && mounted) {
           🌐 Hey!
         </h1>
        <p style={{ opacity: '0.9', fontSize: '16px' }}>
-        Mensajes temporales actualizados cada 5 segundos • Duración: 15 segundos
+        Mensajes temporales actualizados cada 5 segundos • Duración: 30 segundos
       </p>
 
 </div> 
